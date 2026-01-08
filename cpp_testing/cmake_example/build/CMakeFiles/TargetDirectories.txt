@@ -1,0 +1,10 @@
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/calculator.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/run.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/build-and-run.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/show-help.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/edit_cache.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/rebuild_cache.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/list_install_components.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/install.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/install/local.dir
+/Users/arihant.ja/Desktop/copilot/lld/cpp_testing/cmake_example/build/CMakeFiles/install/strip.dir
