@@ -5,43 +5,26 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <typeinfo>
+#include <cmath>
 
 /**
  * ===============================================
  * POLYMORPHISM - ONE INTERFACE, MULTIPLE FORMS
  * ===============================================
- * 
+ *
  * Polymorphism allows objects of different types to be treated as objects of
  * a common base type while maintaining their specific behavior.
- * 
+ *
  * INTERVIEW QUESTIONS COVERED:
  * 1. What is polymorphism and its types?
  * 2. What is the difference between compile-time and runtime polymorphism?
- * 3. What are virtual fun    intContainer.add(10);
-    intContainer.add(20);
-    intContainer.add(30);
-    intContainer.display();
-    
-    BasicConcepts::Container<std::string> stringContainer;
-    stringContainer.add("Hello");
-    stringContainer.add("Template");
-    stringContainer.add("World");
-    stringContainer.display();
-    
-    // Operator Overloading
-    std::cout << "\n4. Operator Overloading:" << std::endl;
-    BasicConcepts::Point p1(3, 4);
-    BasicConcepts::Point p2(1, 2);
-    
-    BasicConcepts::Point p3 = p1 + p2;
-    std::cout << "p1: (" << p1.x << ", " << p1.y << ")" << std::endl;
-    std::cout << "p2: (" << p2.x << ", " << p2.y << ")" << std::endl;
-    std::cout << "p1 + p2 = (" << p3.x << ", " << p3.y << ")" << std::endl;ey work?
+ * 3. What are virtual functions and how do they work?
  * 4. What is a vtable (virtual table)?
  * 5. What is function overloading vs overriding?
  * 6. What are pure virtual functions and abstract classes?
- * 7. What is dynamic_cast and when to use it?
+ *
+ * Operator overloading, templates, functors and dynamic_cast are in
+ * 04_advanced_cpp/advanced_polymorphism.hpp.
  */
 
 namespace BasicConcepts {
@@ -77,68 +60,6 @@ public:
         std::cout << "Concatenating strings: " << a << " + " << b;
         return a + b;
     }
-    
-    // Template function - compile-time polymorphism
-    template<typename T>
-    T multiply(T a, T b) {
-        std::cout << "Template multiply: " << a << " * " << b;
-        return a * b;
-    }
-};
-
-/**
- * Operator Overloading - Compile-time polymorphism
- */
-class Complex {
-private:
-    double real, imaginary;
-
-public:
-    Complex(double r = 0, double i = 0) : real(r), imaginary(i) {}
-    
-    // Operator overloading
-    Complex operator+(const Complex& other) const {
-        return Complex(real + other.real, imaginary + other.imaginary);
-    }
-    
-    Complex operator-(const Complex& other) const {
-        return Complex(real - other.real, imaginary - other.imaginary);
-    }
-    
-    Complex operator*(const Complex& other) const {
-        return Complex(real * other.real - imaginary * other.imaginary,
-                      real * other.imaginary + imaginary * other.real);
-    }
-    
-    bool operator==(const Complex& other) const {
-        return real == other.real && imaginary == other.imaginary;
-    }
-    
-    // Assignment operator
-    Complex& operator=(const Complex& other) {
-        if (this != &other) {
-            real = other.real;
-            imaginary = other.imaginary;
-        }
-        return *this;
-    }
-    
-    // Stream operators
-    friend std::ostream& operator<<(std::ostream& os, const Complex& c) {
-        os << c.real;
-        if (c.imaginary >= 0) os << "+";
-        os << c.imaginary << "i";
-        return os;
-    }
-    
-    friend std::istream& operator>>(std::istream& is, Complex& c) {
-        is >> c.real >> c.imaginary;
-        return is;
-    }
-    
-    // Getters
-    double getReal() const { return real; }
-    double getImaginary() const { return imaginary; }
 };
 
 /**
@@ -334,127 +255,23 @@ public:
 /**
  * Function demonstrating runtime polymorphism
  */
-void processShape(const Shape& shape) {
+inline void processShape(const Shape& shape) {
     std::cout << "\n--- Processing Shape ---" << std::endl;
     shape.displayInfo();
     shape.draw();
     std::cout << "Shape type: " << shape.getType() << std::endl;
 }
 
-void processShapePointer(const Shape* shape) {
-    if (shape) {
-        std::cout << "\n--- Processing Shape Pointer ---" << std::endl;
-        shape->displayInfo();
-        shape->draw();
-        
-        // Demonstrate dynamic_cast
-        if (const Circle* circle = dynamic_cast<const Circle*>(shape)) {
-            std::cout << "This is a circle with radius: " << circle->getRadius() << std::endl;
-        } else if (const Rectangle* rect = dynamic_cast<const Rectangle*>(shape)) {
-            std::cout << "This is a rectangle " << rect->getWidth() 
-                      << "x" << rect->getHeight() << std::endl;
-            if (rect->isSquare()) {
-                std::cout << "It's actually a square!" << std::endl;
-            }
-        } else if (const Triangle* tri = dynamic_cast<const Triangle*>(shape)) {
-            std::cout << "This is a " << tri->getTriangleType() << " triangle" << std::endl;
-        }
-    }
-}
-
-/**
- * Advanced Polymorphism - Function Objects (Functors)
- */
-class Functor {
-private:
-    int multiplier;
-
-public:
-    Functor(int m) : multiplier(m) {}
-    
-    // Overload function call operator
-    int operator()(int x) const {
-        return x * multiplier;
-    }
-    
-    // Overload for different types
-    double operator()(double x) const {
-        return x * multiplier;
-    }
-};
-
-/**
- * Template-based polymorphism
- */
-template<typename T>
-class Container {
-private:
-    std::vector<T> data;
-
-public:
-    void add(const T& item) {
-        data.push_back(item);
-    }
-    
-    T get(size_t index) const {
-        if (index < data.size()) {
-            return data[index];
-        }
-        throw std::out_of_range("Index out of range");
-    }
-    
-    size_t size() const {
-        return data.size();
-    }
-    
-    // Template method
-    template<typename U>
-    void addConverted(const U& item) {
-        data.push_back(static_cast<T>(item));
-    }
-    
-    // Function template for operations
-    template<typename Func>
-    void applyFunction(Func f) {
-        for (auto& item : data) {
-            item = f(item);
-        }
-    }
-};
-
-/**
- * Virtual Function Table Demonstration
- */
-class VTableDemo {
-public:
-    virtual void func1() { std::cout << "VTableDemo::func1" << std::endl; }
-    virtual void func2() { std::cout << "VTableDemo::func2" << std::endl; }
-    virtual void func3() { std::cout << "VTableDemo::func3" << std::endl; }
-    
-    void nonVirtualFunc() { std::cout << "VTableDemo::nonVirtualFunc" << std::endl; }
-    
-    virtual ~VTableDemo() = default;
-};
-
-class DerivedVTable : public VTableDemo {
-public:
-    void func1() override { std::cout << "DerivedVTable::func1" << std::endl; }
-    // func2 not overridden - uses base version
-    void func3() override { std::cout << "DerivedVTable::func3" << std::endl; }
-    
-    void derivedSpecific() { std::cout << "DerivedVTable::derivedSpecific" << std::endl; }
-};
-
 /**
  * Polymorphic container and operations
  */
 class ShapeManager {
 private:
-    std::vector<std::unique_ptr<Shape>> shapes;
+    std::vector<std::shared_ptr<Shape>> shapes;
 
 public:
-    void addShape(std::unique_ptr<Shape> shape) {
-        shapes.push_back(std::move(shape));
+    void addShape(std::shared_ptr<Shape> shape) {
+        shapes.push_back(shape);
     }
     
     void drawAllShapes() const {
@@ -480,24 +297,24 @@ public:
         return total;
     }
     
-    std::vector<Shape*> getShapesByType(const std::string& type) const {
-        std::vector<Shape*> result;
+    std::vector<std::shared_ptr<Shape>> getShapesByType(const std::string& type) const {
+        std::vector<std::shared_ptr<Shape>> result;
         for (const auto& shape : shapes) {
             if (shape->getType() == type) {
-                result.push_back(shape.get());
+                result.push_back(shape);
             }
         }
         return result;
     }
-    
+
     void removeShapesByColor(const std::string& color) {
-        shapes.erase(
-            std::remove_if(shapes.begin(), shapes.end(),
-                [&color](const std::unique_ptr<Shape>& shape) {
-                    return shape->getColor() == color;
-                }),
-            shapes.end()
-        );
+        std::vector<std::shared_ptr<Shape>> remaining;
+        for (const auto& shape : shapes) {
+            if (shape->getColor() != color) {
+                remaining.push_back(shape);
+            }
+        }
+        shapes = remaining;
     }
     
     size_t getShapeCount() const {
@@ -592,27 +409,21 @@ public:
  * A6: Functions declared with "= 0", making the class abstract.
  *     Must be implemented by derived classes.
  * 
- * Q7: When to use dynamic_cast?
- * A7: - Safe downcasting in inheritance hierarchy
- *     - Returns nullptr if cast fails (for pointers)
- *     - Throws std::bad_cast if cast fails (for references)
- *     - Requires polymorphic classes (with virtual functions)
- * 
- * Q8: What is the cost of virtual functions?
- * A8: - Extra memory for vtable and vptr
+ * Q7: What is the cost of virtual functions?
+ * A7: - Extra memory for vtable and vptr
  *     - Indirect function call overhead
  *     - Prevents some compiler optimizations
  *     - Usually negligible in most applications
- * 
- * Q9: Can we have virtual constructors?
- * A9: No, constructors cannot be virtual because:
+ *
+ * Q8: Can we have virtual constructors?
+ * A8: No, constructors cannot be virtual because:
  *     - vtable is set up during construction
  *     - Object type is known at construction time
  *     - Use factory pattern for "virtual construction"
- * 
- * Q10: What is object slicing?
- * A10: When derived object is assigned to base object, derived-specific
- *      data is "sliced off". Avoid by using pointers/references.
+ *
+ * Q9: What is object slicing?
+ * A9: When derived object is assigned to base object, derived-specific
+ *     data is "sliced off". Avoid by using pointers/references.
  */
 
 // ======================= DEMONSTRATION FUNCTION =======================
@@ -621,15 +432,15 @@ inline void demonstratePolymorphism() {
     
     // Runtime Polymorphism
     std::cout << "1. Runtime Polymorphism (Virtual Functions):" << std::endl;
-    std::vector<std::unique_ptr<BasicConcepts::Shape>> shapes;
-    shapes.push_back(std::make_unique<BasicConcepts::Circle>("Red", 5.0));
-    shapes.push_back(std::make_unique<BasicConcepts::Rectangle>("Blue", 4.0, 6.0));
-    shapes.push_back(std::make_unique<BasicConcepts::Triangle>("Green", 3.0, 4.0, 5.0));
-    
+    std::vector<std::shared_ptr<BasicConcepts::Shape>> shapes;
+    shapes.push_back(std::make_shared<BasicConcepts::Circle>("Red", 5.0));
+    shapes.push_back(std::make_shared<BasicConcepts::Rectangle>("Blue", 4.0, 6.0));
+    shapes.push_back(std::make_shared<BasicConcepts::Triangle>("Green", 3.0, 4.0, 5.0));
+
     for (const auto& shape : shapes) {
         shape->draw();
         std::cout << "Area: " << shape->calculateArea() << std::endl;
-        std::cout << "Type: " << typeid(*shape).name() << std::endl;
+        std::cout << "Type: " << shape->getType() << std::endl;
         std::cout << std::endl;
     }
     
@@ -641,28 +452,27 @@ inline void demonstratePolymorphism() {
     std::cout << "add(1, 2, 3) = " << calc.add(1, 2, 3) << std::endl;
     std::cout << "add(\"Hello\", \"World\") = " << calc.add(std::string("Hello"), std::string("World")) << std::endl;
     
-    // Template Polymorphism
-    std::cout << "\n3. Template Polymorphism:" << std::endl;
-    BasicConcepts::Container<int> intContainer;
-    intContainer.add(10);
-    intContainer.add(20);
-    intContainer.add(30);
-    std::cout << "Integer container size: " << intContainer.size() << std::endl;
-    
-    BasicConcepts::Container<std::string> stringContainer;
-    stringContainer.add("Hello");
-    stringContainer.add("Template");
-    stringContainer.add("World");
-    std::cout << "String container size: " << stringContainer.size() << std::endl;
-    
-    // Operator Overloading
-    std::cout << "\n4. Basic Template Features:" << std::endl;
-    std::cout << "Demonstrated template polymorphism with different container types" << std::endl;
-    
+    // Polymorphic container
+    std::cout << "\n3. Polymorphic Container (ShapeManager):" << std::endl;
+    BasicConcepts::ShapeManager manager;
+    manager.addShape(std::make_shared<BasicConcepts::Circle>("Red", 1.0));
+    manager.addShape(std::make_shared<BasicConcepts::Rectangle>("Red", 2.0, 3.0));
+    manager.addShape(std::make_shared<BasicConcepts::Rectangle>("Blue", 2.0, 2.0));
+    manager.drawAllShapes();
+    std::cout << "Total area: " << manager.getTotalArea() << std::endl;
+    manager.removeShapesByColor("Red");
+    std::cout << "Shapes left after removing red ones: " << manager.getShapeCount() << std::endl;
+
+    // Interface-based polymorphism
+    std::cout << "\n4. Interfaces (GameSprite is Drawable and Movable):" << std::endl;
+    BasicConcepts::GameSprite hero("Hero", 0.0, 0.0, "hero.png");
+    hero.draw();
+    hero.move(5.0, 2.0);
+
     // Virtual Destructor Demo
     std::cout << "\n5. Virtual Destructor Importance:" << std::endl;
     {
-        std::unique_ptr<BasicConcepts::Shape> shape = std::make_unique<BasicConcepts::Circle>("Blue", 3.0);
+        std::shared_ptr<BasicConcepts::Shape> shape = std::make_shared<BasicConcepts::Circle>("Blue", 3.0);
         shape->draw();
         // Proper cleanup with virtual destructor
     }

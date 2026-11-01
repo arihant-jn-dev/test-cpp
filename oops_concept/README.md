@@ -2,6 +2,8 @@
 
 C++ object-oriented programming concepts, design patterns and modern C++ features, each as a header-only example with a small runnable program next to it. Everything targets C++17 with no external dependencies.
 
+Folders `01`–`03` use only simple syntax you'd write in an LLD round. Fancier C++ (templates, move semantics, lambdas, `std::function`, `dynamic_cast`) lives in `04_advanced_cpp/`, which is optional.
+
 ## 📁 Structure
 
 Every concept is a `.hpp` with a `test_<concept>.cpp` beside it that runs its demo. Folders are numbered in suggested learning order.
@@ -12,8 +14,8 @@ oops_concept/
 │   ├── class_object.hpp            # Classes, constructors, static members, `this`
 │   ├── access_specifiers.hpp       # public / protected / private, friend, struct vs class
 │   ├── encapsulation.hpp           # Data hiding, getters/setters, validation
-│   ├── inheritance.hpp             # Single, multiple, multilevel, virtual (diamond)
-│   ├── polymorphism.hpp            # Virtual functions, overloading, operators
+│   ├── inheritance.hpp             # Single, multilevel inheritance + composition (HAS-A)
+│   ├── polymorphism.hpp            # Virtual functions, overloading, interfaces
 │   ├── abstraction.hpp             # Abstract classes, pure virtual, interfaces
 │   └── test_*.cpp                  # One runner per header above
 │
@@ -22,7 +24,15 @@ oops_concept/
 │   ├── structural/                 # adapter_decorator.hpp
 │   └── behavioral/                 # observer.hpp, strategy.hpp
 │
-├── 03_modern_cpp/                  # smart_pointers, move_semantics, exception_handling
+├── 03_modern_cpp/                  # smart_pointers, exception_handling
+│
+├── 04_advanced_cpp/                # Optional: C++ quiz topics, not needed for LLD
+│   ├── rule_of_five.hpp            # Raw new/delete + all five special members
+│   ├── advanced_inheritance.hpp    # Diamond problem, protected/private inheritance
+│   ├── advanced_polymorphism.hpp   # Operator overloading, templates, functors, dynamic_cast
+│   ├── advanced_patterns.hpp       # Mutex singleton, registration factory, lambda observers
+│   ├── advanced_modern_cpp.hpp     # unique_ptr arrays, custom deleters, conditional noexcept
+│   └── move_semantics.hpp          # Rvalue references, std::move, perfect forwarding
 │
 ├── demos/                          # Programs that combine several pillars
 │   ├── master_demo.cpp             # Most complete walkthrough
@@ -34,6 +44,14 @@ oops_concept/
 │
 └── run_all.sh                      # Build + run every test and demo
 ```
+
+## ✍️ Code Style (folders 01–03)
+
+- **Pointers:** `std::shared_ptr` + `std::make_shared` everywhere, so you never need `std::move`.
+- **Interfaces:** an abstract class with `virtual ... = 0;`, a `virtual ~X() = default;`, and `override` in derived classes.
+- **Types:** variables that hold an interface are declared with that type, e.g. `std::shared_ptr<Coffee> coffee = std::make_shared<Espresso>();`. Range loops still use `for (const auto& x : list)`.
+- **No:** templates you write yourself, lambdas, `std::function`, `dynamic_cast`, operator overloading, move constructors.
+- **Singleton:** private constructor + deleted copy + `static` local instance (see `Logger`).
 
 ## 🚀 Running
 
@@ -52,28 +70,24 @@ g++ -std=c++17 test_inheritance.cpp -o test_inheritance && ./test_inheritance
 
 ## 📊 Status
 
-| Area | Program | Status |
-|------|---------|--------|
-| Pillars | `test_class_object`, `test_access_specifiers`, `test_encapsulation`, `test_inheritance`, `test_polymorphism`, `test_abstraction` | ✅ Builds and runs |
-| Creational | `test_singleton` | ✅ Builds and runs |
-| Creational | `test_factory` | ❌ Compile error: `DesignPatterns` namespace undeclared |
-| Structural | `test_adapter_decorator` | ❌ Compile error: no viable `operator=` (adapter_decorator.hpp:404) |
-| Behavioral | `test_strategy` | ✅ Builds and runs |
-| Behavioral | `test_observer` | ❌ Compile error: missing `#include <map>` (observer.hpp:251) |
-| Modern C++ | `test_smart_pointers`, `test_exception_handling` | ✅ Builds and runs |
-| Modern C++ | `test_move_semantics` | ❌ Compile error: `processValueHelper` used before declaration (move_semantics.hpp:159) |
-| Demos | `master_demo`, `core_concepts_demo`, `quick_demo` | ✅ Builds and runs |
+All 22 programs build and run (`./run_all.sh` prints the live result):
 
-`./run_all.sh` prints the live version of this table.
+| Area | Programs |
+|------|----------|
+| Pillars | `test_class_object`, `test_access_specifiers`, `test_encapsulation`, `test_inheritance`, `test_polymorphism`, `test_abstraction` |
+| Design patterns | `test_singleton`, `test_factory`, `test_adapter_decorator`, `test_observer`, `test_strategy` |
+| Modern C++ | `test_smart_pointers`, `test_exception_handling` |
+| Advanced (optional) | `test_rule_of_five`, `test_advanced_inheritance`, `test_advanced_polymorphism`, `test_advanced_patterns`, `test_advanced_modern_cpp`, `test_move_semantics` |
+| Demos | `master_demo`, `core_concepts_demo`, `quick_demo` |
 
 ## 📖 Concepts Covered
 
 ### 🔹 01 — OOP Pillars
 
 **Classes and Objects** (`class_object.hpp`)
-- Default, parameterized, and copy constructors
+- Default, parameterized, and copy constructors; copy assignment
 - Static vs non-static members
-- `this` pointer usage, method chaining, constructor delegation
+- `this` pointer usage and method chaining
 
 **Access Specifiers** (`access_specifiers.hpp`)
 - `public`, `protected`, `private` and what each allows
@@ -86,58 +100,69 @@ g++ -std=c++17 test_inheritance.cpp -o test_inheritance && ./test_inheritance
 - Friend functions
 
 **Inheritance** (`inheritance.hpp`)
-- Single, multiple, and multilevel inheritance
-- Virtual inheritance and the diamond problem
-- Constructor/destructor call order
+- Single and multilevel inheritance (`Vehicle` → `Car` → `SportsCar`)
+- Composition: `SmartCar` IS-A `Car` and HAS-A `Engine` and `GPS`
+- Constructor/destructor call order, virtual destructors
 
 **Polymorphism** (`polymorphism.hpp`)
-- Runtime: virtual functions, vtable
-- Compile time: function overloading, templates
-- Operator overloading
+- Runtime: virtual functions, vtable, a container of base-class pointers
+- Compile time: function overloading
+- Interfaces: one class implementing two interfaces (`GameSprite`)
 
 **Abstraction** (`abstraction.hpp`)
 - Abstract classes and pure virtual functions
-- Interface design, pure virtual destructors
+- Interfaces, and an abstract class that mixes pure virtual and normal methods (`Comparable`)
 
 ### 🔹 02 — Design Patterns
 
 **Creational**
-- **Singleton** (`singleton.hpp`): classic thread-safe, Meyers' static-local, enum-based config manager. Use for loggers, config, DB connections.
-- **Factory** (`factory.hpp`): simple factory, factory method, abstract factory, registration-based factory. Use for object creation and plugin systems.
+- **Singleton** (`singleton.hpp`): static-local `Logger` and a `ConfigManager` with state. Use for loggers, config, DB connections.
+- **Factory** (`factory.hpp`): simple factory, factory method, abstract factory. Use for object creation and plugin systems.
 
 **Structural**
 - **Adapter & Decorator** (`adapter_decorator.hpp`): interface compatibility; adding behavior dynamically; text-processing pipeline. Use for legacy integration and feature layering.
 
 **Behavioral**
-- **Observer** (`observer.hpp`): classic subject/observer, lambda-based observers, type-safe event system. Use for GUI events, notifications, MVC.
+- **Observer** (`observer.hpp`): subject/observer with notifiers, news agency, stock market. Use for notifications, event systems, MVC.
 - **Strategy** (`strategy.hpp`): payment, sorting and compression strategies. Use for swapping algorithms at runtime.
 
 ### 🔹 03 — Modern C++
 
-- **Smart Pointers** (`smart_pointers.hpp`): `unique_ptr`, `shared_ptr`, `weak_ptr` (breaking cycles), RAII
-- **Move Semantics** (`move_semantics.hpp`): rvalue references, move constructors, `std::forward`, Rule of Five
+- **Smart Pointers** (`smart_pointers.hpp`): `unique_ptr` (single owner), `shared_ptr` (reference counting), `weak_ptr` (breaking cycles), RAII
 - **Exception Handling** (`exception_handling.hpp`): try/catch/throw, custom exceptions, basic/strong/no-throw guarantees, RAII cleanup. When run it writes `test_file.txt` and `transaction_log.txt` into the working directory.
+
+### 🔹 04 — Advanced C++ (optional)
+
+Moved out of 01–03 so the core stays simple. Read these for C++ quiz questions, not for LLD design.
+
+- **Rule of Five** (`rule_of_five.hpp`): deep copy, move constructor/assignment, conversion constructor with raw memory
+- **Advanced Inheritance** (`advanced_inheritance.hpp`): diamond problem and virtual inheritance; protected/private inheritance
+- **Advanced Polymorphism** (`advanced_polymorphism.hpp`): operator overloading, function and class templates, functors, `dynamic_cast`/`typeid`, vtable demo
+- **Advanced Patterns** (`advanced_patterns.hpp`): pointer + mutex singleton, registration-based factory, lambda observers, event system
+- **Advanced Modern C++** (`advanced_modern_cpp.hpp`): `unique_ptr<int[]>`, custom deleters, conditional `noexcept`
+- **Move Semantics** (`move_semantics.hpp`): rvalue references, move constructors, `std::forward`, Rule of Five
 
 ## 📝 Learning Path
 
-1. **Beginner:** `01_oop_pillars/` in order: class_object → access_specifiers → encapsulation → inheritance → polymorphism
-2. **Intermediate:** `01_oop_pillars/abstraction.hpp`, then `02_design_patterns/creational/`, then `03_modern_cpp/smart_pointers.hpp`
-3. **Advanced:** `02_design_patterns/behavioral/` and `structural/`, then `03_modern_cpp/move_semantics.hpp` and `exception_handling.hpp`
+1. **Beginner:** `01_oop_pillars/` in order: class_object → access_specifiers → encapsulation → inheritance → polymorphism → abstraction
+2. **Patterns:** `02_design_patterns/creational/`, then `behavioral/`, then `structural/`
+3. **Modern C++:** `03_modern_cpp/smart_pointers.hpp`, then `exception_handling.hpp`
+4. **Optional:** `04_advanced_cpp/` for C++ language quiz questions
 
 ## 🎯 Interview Focus Areas
 
 1. Virtual functions and the vtable mechanism
-2. Diamond problem and virtual inheritance
+2. IS-A (inheritance) vs HAS-A (composition)
 3. Function overloading vs overriding
 4. When to use which design pattern
-5. Singleton thread safety
+5. Singleton thread safety (static local variables are thread-safe since C++11)
 6. Factory pattern variations
 7. Observer vs pub-sub
 8. Adapter vs decorator
 9. Smart pointer types and usage
-10. Move semantics and perfect forwarding
-11. Exception safety guarantees
-12. RAII
+10. Exception safety guarantees
+11. RAII
+12. Diamond problem and move semantics (see `04_advanced_cpp/`)
 
 ### Practice Scenarios
 
@@ -147,7 +172,6 @@ g++ -std=c++17 test_inheritance.cpp -o test_inheritance && ./test_inheritance
 - **Add features dynamically** → Decorator
 - **Ensure a single instance** → Singleton
 - **Manage resources safely** → Smart pointers + RAII
-- **Optimize performance** → Move semantics
 - **Handle errors gracefully** → Exception handling
 
 ## 🔧 Compiler Flags

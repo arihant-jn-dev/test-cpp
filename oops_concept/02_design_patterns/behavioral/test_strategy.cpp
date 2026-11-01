@@ -1,5 +1,4 @@
 #include "strategy.hpp"
-#include <chrono>
 
 int main() {
     std::cout << "🧪 TESTING DESIGN PATTERNS - Strategy Pattern\n" << std::endl;

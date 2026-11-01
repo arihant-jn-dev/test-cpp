@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cctype>
 
 /**
  * ADAPTER & DECORATOR DESIGN PATTERNS
@@ -50,12 +51,12 @@ public:
 // Adapter to make legacy system compatible with modern interface
 class PaymentAdapter : public ModernPaymentInterface {
 private:
-    std::unique_ptr<LegacyPaymentGateway> legacyGateway;
+    std::shared_ptr<LegacyPaymentGateway> legacyGateway;
     std::string currency;
     
 public:
-    PaymentAdapter(std::unique_ptr<LegacyPaymentGateway> legacy, const std::string& curr = "USD")
-        : legacyGateway(std::move(legacy)), currency(curr) {}
+    PaymentAdapter(std::shared_ptr<LegacyPaymentGateway> legacy, const std::string& curr = "USD")
+        : legacyGateway(legacy), currency(curr) {}
     
     bool processPayment(double amount, const std::string& method) override {
         std::cout << "🔄 Adapter: Converting modern call to legacy format" << std::endl;
@@ -101,11 +102,11 @@ public:
 // Client code that works with modern interface
 class PaymentProcessor {
 private:
-    std::unique_ptr<ModernPaymentInterface> gateway;
+    std::shared_ptr<ModernPaymentInterface> gateway;
     
 public:
-    void setGateway(std::unique_ptr<ModernPaymentInterface> newGateway) {
-        gateway = std::move(newGateway);
+    void setGateway(std::shared_ptr<ModernPaymentInterface> newGateway) {
+        gateway = newGateway;
         std::cout << "🔧 Payment processor using: " << gateway->getPaymentType() << std::endl;
     }
     
@@ -170,10 +171,10 @@ public:
 // Base Decorator
 class CoffeeDecorator : public Coffee {
 protected:
-    std::unique_ptr<Coffee> coffee;
+    std::shared_ptr<Coffee> coffee;
     
 public:
-    CoffeeDecorator(std::unique_ptr<Coffee> c) : coffee(std::move(c)) {}
+    CoffeeDecorator(std::shared_ptr<Coffee> c) : coffee(c) {}
     
     std::string getDescription() const override {
         return coffee->getDescription();
@@ -191,7 +192,7 @@ public:
 // Concrete Decorators
 class MilkDecorator : public CoffeeDecorator {
 public:
-    MilkDecorator(std::unique_ptr<Coffee> c) : CoffeeDecorator(std::move(c)) {}
+    MilkDecorator(std::shared_ptr<Coffee> c) : CoffeeDecorator(c) {}
     
     std::string getDescription() const override {
         return coffee->getDescription() + " + Milk";
@@ -209,7 +210,7 @@ public:
 
 class SugarDecorator : public CoffeeDecorator {
 public:
-    SugarDecorator(std::unique_ptr<Coffee> c) : CoffeeDecorator(std::move(c)) {}
+    SugarDecorator(std::shared_ptr<Coffee> c) : CoffeeDecorator(c) {}
     
     std::string getDescription() const override {
         return coffee->getDescription() + " + Sugar";
@@ -227,7 +228,7 @@ public:
 
 class VanillaDecorator : public CoffeeDecorator {
 public:
-    VanillaDecorator(std::unique_ptr<Coffee> c) : CoffeeDecorator(std::move(c)) {}
+    VanillaDecorator(std::shared_ptr<Coffee> c) : CoffeeDecorator(c) {}
     
     std::string getDescription() const override {
         return coffee->getDescription() + " + Vanilla";
@@ -245,7 +246,7 @@ public:
 
 class WhippedCreamDecorator : public CoffeeDecorator {
 public:
-    WhippedCreamDecorator(std::unique_ptr<Coffee> c) : CoffeeDecorator(std::move(c)) {}
+    WhippedCreamDecorator(std::shared_ptr<Coffee> c) : CoffeeDecorator(c) {}
     
     std::string getDescription() const override {
         return coffee->getDescription() + " + Whipped Cream";
@@ -282,10 +283,10 @@ public:
 
 class TextProcessorDecorator : public TextProcessor {
 protected:
-    std::unique_ptr<TextProcessor> processor;
+    std::shared_ptr<TextProcessor> processor;
     
 public:
-    TextProcessorDecorator(std::unique_ptr<TextProcessor> p) : processor(std::move(p)) {}
+    TextProcessorDecorator(std::shared_ptr<TextProcessor> p) : processor(p) {}
     
     std::string process(const std::string& text) override {
         return processor->process(text);
@@ -298,11 +299,13 @@ public:
 
 class UpperCaseDecorator : public TextProcessorDecorator {
 public:
-    UpperCaseDecorator(std::unique_ptr<TextProcessor> p) : TextProcessorDecorator(std::move(p)) {}
+    UpperCaseDecorator(std::shared_ptr<TextProcessor> p) : TextProcessorDecorator(p) {}
     
     std::string process(const std::string& text) override {
         std::string processed = processor->process(text);
-        std::transform(processed.begin(), processed.end(), processed.begin(), ::toupper);
+        for (char& c : processed) {
+            c = std::toupper(c);
+        }
         return processed;
     }
     
@@ -316,8 +319,8 @@ private:
     int shift;
     
 public:
-    EncryptionDecorator(std::unique_ptr<TextProcessor> p, int s = 3) 
-        : TextProcessorDecorator(std::move(p)), shift(s) {}
+    EncryptionDecorator(std::shared_ptr<TextProcessor> p, int s = 3) 
+        : TextProcessorDecorator(p), shift(s) {}
     
     std::string process(const std::string& text) override {
         std::string processed = processor->process(text);
@@ -341,7 +344,7 @@ public:
 
 class CompressionDecorator : public TextProcessorDecorator {
 public:
-    CompressionDecorator(std::unique_ptr<TextProcessor> p) : TextProcessorDecorator(std::move(p)) {}
+    CompressionDecorator(std::shared_ptr<TextProcessor> p) : TextProcessorDecorator(p) {}
     
     std::string process(const std::string& text) override {
         std::string processed = processor->process(text);
@@ -378,14 +381,14 @@ inline void demonstrateAdapterDecorator() {
     
     // Use modern payment gateway
     std::cout << "\n--- Using Modern Payment Gateway ---" << std::endl;
-    processor.setGateway(std::make_unique<ModernPaymentGateway>());
+    processor.setGateway(std::make_shared<ModernPaymentGateway>());
     processor.processTransaction(100.50, "Credit Card", "TXN-001");
     
     // Integrate legacy system using adapter
     std::cout << "\n--- Integrating Legacy System with Adapter ---" << std::endl;
-    auto legacyGateway = std::make_unique<LegacyPaymentGateway>();
-    auto adapter = std::make_unique<PaymentAdapter>(std::move(legacyGateway), "USD");
-    processor.setGateway(std::move(adapter));
+    std::shared_ptr<LegacyPaymentGateway> legacyGateway = std::make_shared<LegacyPaymentGateway>();
+    std::shared_ptr<ModernPaymentInterface> adapter = std::make_shared<PaymentAdapter>(legacyGateway, "USD");
+    processor.setGateway(adapter);
     processor.processTransaction(250.75, "Debit Card", "TXN-002");
     
     // Decorator Pattern Demo
@@ -393,17 +396,17 @@ inline void demonstrateAdapterDecorator() {
     
     // Simple coffee
     std::cout << "\n--- Simple Coffee ---" << std::endl;
-    auto coffee1 = std::make_unique<SimpleCoffee>();
+    std::shared_ptr<Coffee> coffee1 = std::make_shared<SimpleCoffee>();
     std::cout << "Order: " << coffee1->getDescription() << std::endl;
     std::cout << "Cost: $" << coffee1->getCost() << std::endl;
     coffee1->prepare();
     
     // Decorated coffee with multiple additions
     std::cout << "\n--- Decorated Coffee (Espresso + Milk + Sugar + Vanilla) ---" << std::endl;
-    auto coffee2 = std::make_unique<Espresso>();
-    coffee2 = std::make_unique<MilkDecorator>(std::move(coffee2));
-    coffee2 = std::make_unique<SugarDecorator>(std::move(coffee2));
-    coffee2 = std::make_unique<VanillaDecorator>(std::move(coffee2));
+    std::shared_ptr<Coffee> coffee2 = std::make_shared<Espresso>();
+    coffee2 = std::make_shared<MilkDecorator>(coffee2);
+    coffee2 = std::make_shared<SugarDecorator>(coffee2);
+    coffee2 = std::make_shared<VanillaDecorator>(coffee2);
     
     std::cout << "Order: " << coffee2->getDescription() << std::endl;
     std::cout << "Cost: $" << coffee2->getCost() << std::endl;
@@ -411,11 +414,11 @@ inline void demonstrateAdapterDecorator() {
     
     // Luxury coffee with all decorations
     std::cout << "\n--- Luxury Coffee (All Decorations) ---" << std::endl;
-    auto coffee3 = std::make_unique<SimpleCoffee>();
-    coffee3 = std::make_unique<MilkDecorator>(std::move(coffee3));
-    coffee3 = std::make_unique<SugarDecorator>(std::move(coffee3));
-    coffee3 = std::make_unique<VanillaDecorator>(std::move(coffee3));
-    coffee3 = std::make_unique<WhippedCreamDecorator>(std::move(coffee3));
+    std::shared_ptr<Coffee> coffee3 = std::make_shared<SimpleCoffee>();
+    coffee3 = std::make_shared<MilkDecorator>(coffee3);
+    coffee3 = std::make_shared<SugarDecorator>(coffee3);
+    coffee3 = std::make_shared<VanillaDecorator>(coffee3);
+    coffee3 = std::make_shared<WhippedCreamDecorator>(coffee3);
     
     std::cout << "Order: " << coffee3->getDescription() << std::endl;
     std::cout << "Cost: $" << coffee3->getCost() << std::endl;
@@ -428,17 +431,17 @@ inline void demonstrateAdapterDecorator() {
     
     // Plain processing
     std::cout << "\n--- Plain Text Processing ---" << std::endl;
-    auto processor1 = std::make_unique<PlainTextProcessor>();
+    std::shared_ptr<TextProcessor> processor1 = std::make_shared<PlainTextProcessor>();
     std::string result1 = processor1->process(originalText);
     std::cout << "Processing: " << processor1->getProcessingInfo() << std::endl;
     std::cout << "Result: \"" << result1 << "\"" << std::endl;
     
     // Multiple decorators
     std::cout << "\n--- Multiple Text Decorators ---" << std::endl;
-    auto processor2 = std::make_unique<PlainTextProcessor>();
-    processor2 = std::make_unique<UpperCaseDecorator>(std::move(processor2));
-    processor2 = std::make_unique<CompressionDecorator>(std::move(processor2));
-    processor2 = std::make_unique<EncryptionDecorator>(std::move(processor2), 5);
+    std::shared_ptr<TextProcessor> processor2 = std::make_shared<PlainTextProcessor>();
+    processor2 = std::make_shared<UpperCaseDecorator>(processor2);
+    processor2 = std::make_shared<CompressionDecorator>(processor2);
+    processor2 = std::make_shared<EncryptionDecorator>(processor2, 5);
     
     std::string result2 = processor2->process(originalText);
     std::cout << "Processing: " << processor2->getProcessingInfo() << std::endl;
@@ -446,10 +449,10 @@ inline void demonstrateAdapterDecorator() {
     
     // Different decorator order
     std::cout << "\n--- Different Decorator Order ---" << std::endl;
-    auto processor3 = std::make_unique<PlainTextProcessor>();
-    processor3 = std::make_unique<EncryptionDecorator>(std::move(processor3), 2);
-    processor3 = std::make_unique<UpperCaseDecorator>(std::move(processor3));
-    processor3 = std::make_unique<CompressionDecorator>(std::move(processor3));
+    std::shared_ptr<TextProcessor> processor3 = std::make_shared<PlainTextProcessor>();
+    processor3 = std::make_shared<EncryptionDecorator>(processor3, 2);
+    processor3 = std::make_shared<UpperCaseDecorator>(processor3);
+    processor3 = std::make_shared<CompressionDecorator>(processor3);
     
     std::string result3 = processor3->process(originalText);
     std::cout << "Processing: " << processor3->getProcessingInfo() << std::endl;

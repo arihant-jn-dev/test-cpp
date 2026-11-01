@@ -321,11 +321,24 @@ public:
     virtual bool deserialize(const std::string& data) = 0;
 };
 
+/**
+ * Abstract class with one pure virtual function and two normal ones:
+ * derived classes only say WHAT value to compare by.
+ */
 class Comparable {
 public:
     virtual ~Comparable() = default;
-    virtual int compareTo(const Comparable& other) const = 0;
-    virtual bool equals(const Comparable& other) const = 0;
+    virtual int getCompareValue() const = 0;
+
+    int compareTo(const Comparable& other) const {
+        if (getCompareValue() < other.getCompareValue()) return -1;
+        if (getCompareValue() > other.getCompareValue()) return 1;
+        return 0;
+    }
+
+    bool equals(const Comparable& other) const {
+        return compareTo(other) == 0;
+    }
 };
 
 /**
@@ -375,20 +388,9 @@ public:
         return false;
     }
     
-    // Implement Comparable interface
-    int compareTo(const Comparable& other) const override {
-        const Document* otherDoc = dynamic_cast<const Document*>(&other);
-        if (!otherDoc) {
-            throw std::invalid_argument("Cannot compare Document with non-Document");
-        }
-        
-        if (pageCount < otherDoc->pageCount) return -1;
-        if (pageCount > otherDoc->pageCount) return 1;
-        return title.compare(otherDoc->title);
-    }
-    
-    bool equals(const Comparable& other) const override {
-        return compareTo(other) == 0;
+    // Implement Comparable interface - documents are compared by page count
+    int getCompareValue() const override {
+        return pageCount;
     }
     
     // Getters
@@ -431,10 +433,7 @@ private:
 public:
     Button(const std::string& n, const std::string& t, const std::string& s)
         : UIComponent(n), text(t), style(s) {}
-    
-    virtual void render() override = 0;
-    virtual void handleClick() override = 0;
-    
+
     const std::string& getText() const { return text; }
     const std::string& getStyle() const { return style; }
 };
@@ -447,10 +446,7 @@ private:
 public:
     TextField(const std::string& n, const std::string& p)
         : UIComponent(n), placeholder(p) {}
-    
-    virtual void render() override = 0;
-    virtual void handleClick() override = 0;
-    
+
     const std::string& getPlaceholder() const { return placeholder; }
     const std::string& getValue() const { return value; }
     void setValue(const std::string& v) { value = v; }
@@ -525,23 +521,23 @@ public:
 class UIFactory {
 public:
     virtual ~UIFactory() = default;
-    virtual std::unique_ptr<Button> createButton(const std::string& name, 
+    virtual std::shared_ptr<Button> createButton(const std::string& name,
                                                 const std::string& text) = 0;
-    virtual std::unique_ptr<TextField> createTextField(const std::string& name,
+    virtual std::shared_ptr<TextField> createTextField(const std::string& name,
                                                       const std::string& placeholder) = 0;
     virtual std::string getPlatformName() const = 0;
 };
 
 class WindowsUIFactory : public UIFactory {
 public:
-    std::unique_ptr<Button> createButton(const std::string& name, 
+    std::shared_ptr<Button> createButton(const std::string& name,
                                        const std::string& text) override {
-        return std::make_unique<WindowsButton>(name, text);
+        return std::make_shared<WindowsButton>(name, text);
     }
-    
-    std::unique_ptr<TextField> createTextField(const std::string& name,
+
+    std::shared_ptr<TextField> createTextField(const std::string& name,
                                              const std::string& placeholder) override {
-        return std::make_unique<WindowsTextField>(name, placeholder);
+        return std::make_shared<WindowsTextField>(name, placeholder);
     }
     
     std::string getPlatformName() const override {
@@ -551,14 +547,14 @@ public:
 
 class MacUIFactory : public UIFactory {
 public:
-    std::unique_ptr<Button> createButton(const std::string& name, 
+    std::shared_ptr<Button> createButton(const std::string& name,
                                        const std::string& text) override {
-        return std::make_unique<MacButton>(name, text);
+        return std::make_shared<MacButton>(name, text);
     }
-    
-    std::unique_ptr<TextField> createTextField(const std::string& name,
+
+    std::shared_ptr<TextField> createTextField(const std::string& name,
                                              const std::string& placeholder) override {
-        return std::make_unique<MacTextField>(name, placeholder);
+        return std::make_shared<MacTextField>(name, placeholder);
     }
     
     std::string getPlatformName() const override {
@@ -571,20 +567,17 @@ public:
  */
 class Application {
 private:
-    std::unique_ptr<UIFactory> factory;
-    std::vector<std::unique_ptr<UIComponent>> components;
+    std::shared_ptr<UIFactory> factory;
+    std::vector<std::shared_ptr<UIComponent>> components;
 
 public:
-    Application(std::unique_ptr<UIFactory> f) : factory(std::move(f)) {}
-    
+    Application(std::shared_ptr<UIFactory> f) : factory(f) {}
+
     void createUI() {
         std::cout << "Creating UI for " << factory->getPlatformName() << " platform" << std::endl;
-        
-        auto button = factory->createButton("submitBtn", "Submit");
-        auto textField = factory->createTextField("nameField", "Enter your name");
-        
-        components.push_back(std::move(button));
-        components.push_back(std::move(textField));
+
+        components.push_back(factory->createButton("submitBtn", "Submit"));
+        components.push_back(factory->createTextField("nameField", "Enter your name"));
     }
     
     void renderUI() {

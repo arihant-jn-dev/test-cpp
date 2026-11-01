@@ -48,7 +48,7 @@ int main() {
             std::cout << "Security error: " << e.what() << std::endl;
         }
         
-        // 3. Inheritance (Single, Multiple, Virtual)
+        // 3. Inheritance (Single, Multilevel) and Composition
         std::cout << "\n3. Inheritance:" << std::endl;
         
         // Single inheritance
@@ -57,27 +57,17 @@ int main() {
                   << ", Doors: " << car.getNumberOfDoors() 
                   << ", Fuel: " << car.getFuelType() << std::endl;
         
-        // Multiple inheritance
+        // Multilevel inheritance
         BasicConcepts::SportsCar sports("Ferrari", "F8", 2023, 250000.0, 2, "Gasoline", 3.9, 340, 3.0, true);
         std::cout << "Sports car: " << sports.getBrand() << " " << sports.getModel()
                   << ", Max speed: " << sports.getMaxSpeed() << " mph" << std::endl;
-        
-        // Virtual inheritance demo
-        BasicConcepts::CarEntertainmentSystem entertainment;
-        std::cout << "Entertainment system demonstrates virtual inheritance to avoid diamond problem" << std::endl;
-        
-        // 4. Access Control Demo
-        std::cout << "\n4. Access Control in Inheritance:" << std::endl;
-        BasicConcepts::PublicDerived pubDerived;
-        BasicConcepts::PrivateDerived privDerived;
-        BasicConcepts::ProtectedDerived protDerived;
-        
-        pubDerived.testAccess();
-        privDerived.testAccess();
-        protDerived.testAccess();
-        
-        // 5. Employee System (Advanced Encapsulation)
-        std::cout << "\n5. Employee Management System:" << std::endl;
+
+        // Composition
+        BasicConcepts::SmartCar smartCar("Tesla", "Model 3", 2023, 45000.0, 4, "Electric", 0.0, 280, "Electric", "Autopilot");
+        smartCar.startEngine();
+
+        // 4. Employee System (Advanced Encapsulation)
+        std::cout << "\n4. Employee Management System:" << std::endl;
         BasicConcepts::Employee emp1("John", "Doe", "Engineering", 75000.0, 3);
         BasicConcepts::Employee emp2("Jane", "Smith", "Marketing", 65000.0, 2);
         
@@ -91,8 +81,8 @@ int main() {
         std::cout << "✅ All basic OOP concepts demonstrated:" << std::endl;
         std::cout << "   • Classes and Objects with constructors/destructors" << std::endl;
         std::cout << "   • Encapsulation with private/protected/public access" << std::endl;
-        std::cout << "   • Single, multiple, and virtual inheritance" << std::endl;
-        std::cout << "   • Access control in inheritance hierarchies" << std::endl;
+        std::cout << "   • Single and multilevel inheritance" << std::endl;
+        std::cout << "   • Composition (HAS-A)" << std::endl;
         std::cout << "   • Static members and methods" << std::endl;
         std::cout << "   • Exception handling for security" << std::endl;
         
