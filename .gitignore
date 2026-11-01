@@ -1,0 +1,20 @@
+# OS / editor
+.DS_Store
+
+# Build output
+build/
+*.o
+a.out
+
+# oops_concept: binaries from compiling a test/demo in place (g++ test_x.cpp -o test_x)
+oops_concept/**/test_*
+!oops_concept/**/test_*.cpp
+oops_concept/demos/*
+!oops_concept/demos/*.cpp
+
+# Files written by 03_modern_cpp/exception_handling.hpp when run
+test_file.txt
+transaction_log.txt
+
+# cpp_testing
+cpp_testing/basic_example/test_exe
