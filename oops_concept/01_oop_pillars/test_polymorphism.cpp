@@ -20,10 +20,10 @@ int main() {
         std::cout << "Triangle area: " << triangle.calculateArea() << std::endl;
         
         std::cout << "\n2. Polymorphic behavior via base pointers:" << std::endl;
-        std::vector<std::unique_ptr<BasicConcepts::Shape>> shapes;
-        shapes.push_back(std::make_unique<BasicConcepts::Circle>("Yellow", 3.0));
-        shapes.push_back(std::make_unique<BasicConcepts::Rectangle>("Purple", 5.0, 2.0));
-        shapes.push_back(std::make_unique<BasicConcepts::Triangle>("Orange", 6.0, 8.0, 10.0));
+        std::vector<std::shared_ptr<BasicConcepts::Shape>> shapes;
+        shapes.push_back(std::make_shared<BasicConcepts::Circle>("Yellow", 3.0));
+        shapes.push_back(std::make_shared<BasicConcepts::Rectangle>("Purple", 5.0, 2.0));
+        shapes.push_back(std::make_shared<BasicConcepts::Triangle>("Orange", 6.0, 8.0, 10.0));
         
         for (const auto& shape : shapes) {
             shape->draw();

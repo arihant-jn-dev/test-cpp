@@ -2,7 +2,6 @@
 #define SINGLETON_HPP
 
 #include <iostream>
-#include <mutex>
 #include <string>
 
 /**
@@ -10,53 +9,13 @@
  * - Ensures only ONE instance of a class exists
  * - Provides global access to that instance
  * - Common in interviews for database connections, loggers, configuration
+ *
+ * Recipe: private constructor + deleted copy + static getInstance() that
+ * returns a static local object. This is the version to write in interviews.
+ * (A pointer + mutex version is in 04_advanced_cpp/advanced_patterns.hpp.)
  */
 
-// ======================= CLASSIC SINGLETON =======================
-class DatabaseConnection {
-private:
-    static DatabaseConnection* instance;
-    static std::mutex mutex_;
-    std::string connection_string;
-    
-    // Private constructor prevents external instantiation
-    DatabaseConnection(const std::string& conn_str = "localhost:3306") 
-        : connection_string(conn_str) {
-        std::cout << "Database connection created to: " << conn_str << std::endl;
-    }
-    
-    // Delete copy constructor and assignment operator
-    DatabaseConnection(const DatabaseConnection&) = delete;
-    DatabaseConnection& operator=(const DatabaseConnection&) = delete;
-    
-public:
-    // Thread-safe singleton instance
-    static DatabaseConnection* getInstance(const std::string& conn_str = "localhost:3306") {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (instance == nullptr) {
-            instance = new DatabaseConnection(conn_str);
-        }
-        return instance;
-    }
-    
-    void query(const std::string& sql) {
-        std::cout << "Executing query on " << connection_string << ": " << sql << std::endl;
-    }
-    
-    void close() {
-        std::cout << "Closing connection to " << connection_string << std::endl;
-    }
-    
-    ~DatabaseConnection() {
-        std::cout << "Database connection destroyed" << std::endl;
-    }
-};
-
-// Static member definitions
-DatabaseConnection* DatabaseConnection::instance = nullptr;
-std::mutex DatabaseConnection::mutex_;
-
-// ======================= MODERN C++ SINGLETON (RECOMMENDED) =======================
+// ======================= SINGLETON (RECOMMENDED) =======================
 class Logger {
 private:
     Logger() = default;
@@ -85,7 +44,7 @@ public:
     }
 };
 
-// ======================= ENUM SINGLETON (ADVANCED) =======================
+// ======================= CONFIG SINGLETON (SAME RECIPE, WITH STATE) =======================
 class ConfigManager {
 public:
     enum class Environment {
@@ -99,8 +58,11 @@ private:
     std::string config_path;
     
     ConfigManager() : env(Environment::DEVELOPMENT), config_path("config/dev.json") {}
-    
+
 public:
+    ConfigManager(const ConfigManager&) = delete;
+    ConfigManager& operator=(const ConfigManager&) = delete;
+
     static ConfigManager& getInstance() {
         static ConfigManager instance;
         return instance;
@@ -140,17 +102,8 @@ public:
 inline void demonstrateSingleton() {
     std::cout << "\n===== SINGLETON PATTERN DEMO =====\n" << std::endl;
     
-    // Classic Singleton
-    std::cout << "1. Classic Singleton (DatabaseConnection):" << std::endl;
-    auto* db1 = DatabaseConnection::getInstance("mysql://localhost:3306");
-    auto* db2 = DatabaseConnection::getInstance("postgres://localhost:5432"); // Same instance!
-    
-    std::cout << "db1 == db2: " << (db1 == db2 ? "true" : "false") << std::endl;
-    db1->query("SELECT * FROM users");
-    db2->query("INSERT INTO logs VALUES ('test')");
-    
-    // Modern Singleton
-    std::cout << "\n2. Modern Singleton (Logger):" << std::endl;
+    // Singleton
+    std::cout << "1. Singleton (Logger):" << std::endl;
     Logger& logger1 = Logger::getInstance();
     Logger& logger2 = Logger::getInstance();
     
@@ -159,7 +112,7 @@ inline void demonstrateSingleton() {
     logger2.error("Something went wrong");
     
     // Configuration Singleton
-    std::cout << "\n3. Configuration Singleton:" << std::endl;
+    std::cout << "\n2. Configuration Singleton:" << std::endl;
     ConfigManager& config1 = ConfigManager::getInstance();
     config1.displayConfig();
     config1.setEnvironment(ConfigManager::Environment::PRODUCTION);

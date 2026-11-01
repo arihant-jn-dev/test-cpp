@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
-#include <memory>
 #include <vector>
 #include <fstream>
 
@@ -162,10 +161,10 @@ public:
         }
     }
     
-    double getBalance() const noexcept { return balance; }
-    const std::string& getAccountNumber() const noexcept { return accountNumber; }
-    
-    void printTransactionHistory() const noexcept {
+    double getBalance() const { return balance; }
+    const std::string& getAccountNumber() const { return accountNumber; }
+
+    void printTransactionHistory() const {
         std::cout << "📋 Transaction history for " << accountNumber << ":" << std::endl;
         for (const auto& transaction : transactionHistory) {
             std::cout << "  " << transaction << std::endl;
@@ -174,51 +173,49 @@ public:
 };
 
 // ======================= RAII AND EXCEPTION SAFETY =======================
+// RAII: the constructor opens the file, the destructor closes it - even if an
+// exception is thrown in between.
 class FileManager {
 private:
-    std::unique_ptr<std::ofstream> file;
+    std::ofstream file;
     std::string filename;
-    
+
 public:
     FileManager(const std::string& name) : filename(name) {
-        file = std::make_unique<std::ofstream>(filename);
-        if (!file->is_open()) {
+        file.open(filename);
+        if (!file.is_open()) {
             throw std::runtime_error("Failed to open file: " + filename);
         }
         std::cout << "📁 File opened: " << filename << std::endl;
     }
-    
+
     ~FileManager() {
-        if (file && file->is_open()) {
-            file->close();
+        if (file.is_open()) {
+            file.close();
             std::cout << "📁 File closed: " << filename << std::endl;
         }
     }
-    
+
     // Delete copy constructor and assignment (RAII resource)
     FileManager(const FileManager&) = delete;
     FileManager& operator=(const FileManager&) = delete;
-    
-    // Move constructor
-    FileManager(FileManager&& other) noexcept 
-        : file(std::move(other.file)), filename(std::move(other.filename)) {}
-    
+
     void write(const std::string& content) {
-        if (!file || !file->is_open()) {
+        if (!file.is_open()) {
             throw std::runtime_error("File is not open for writing");
         }
-        
-        *file << content << std::endl;
-        if (file->fail()) {
+
+        file << content << std::endl;
+        if (file.fail()) {
             throw std::runtime_error("Failed to write to file: " + filename);
         }
-        
+
         std::cout << "✍️  Written to file: " << content << std::endl;
     }
-    
+
     void flush() {
-        if (file && file->is_open()) {
-            file->flush();
+        if (file.is_open()) {
+            file.flush();
             std::cout << "💾 File flushed: " << filename << std::endl;
         }
     }
@@ -272,7 +269,7 @@ public:
         try {
             SafeBankAccount account("ACC003", 750.0);
             
-            // These operations are marked noexcept
+            // These getters never throw
             double balance = account.getBalance();
             const std::string& accNum = account.getAccountNumber();
             
@@ -343,12 +340,6 @@ public:
             throw std::invalid_argument("Division by zero");
         }
         return a / b;
-    }
-    
-    // Function with conditional noexcept
-    template<typename T>
-    static auto conditionalNoexcept(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>) {
-        return std::forward<T>(value);
     }
 };
 

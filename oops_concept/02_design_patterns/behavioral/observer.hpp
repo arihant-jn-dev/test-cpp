@@ -5,14 +5,14 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <memory>
-#include <functional>
 
 /**
  * OBSERVER DESIGN PATTERN
  * - Defines one-to-many dependency between objects
  * - When subject changes state, all observers are notified
  * - Common in interviews: Event systems, MVC, notifications
+ *
+ * Lambda/std::function based observers are in 04_advanced_cpp/advanced_patterns.hpp.
  */
 
 // ======================= CLASSIC OBSERVER PATTERN =======================
@@ -143,40 +143,6 @@ public:
     }
 };
 
-// ======================= MODERN C++ OBSERVER (FUNCTION-BASED) =======================
-template<typename T>
-class ModernSubject {
-private:
-    std::vector<std::function<void(const T&)>> observers;
-    T data;
-    
-public:
-    void subscribe(std::function<void(const T&)> observer) {
-        observers.push_back(observer);
-    }
-    
-    void unsubscribe(size_t index) {
-        if (index < observers.size()) {
-            observers.erase(observers.begin() + index);
-        }
-    }
-    
-    void notify() {
-        for (const auto& observer : observers) {
-            observer(data);
-        }
-    }
-    
-    void setData(const T& newData) {
-        data = newData;
-        notify();
-    }
-    
-    const T& getData() const {
-        return data;
-    }
-};
-
 // ======================= STOCK PRICE OBSERVER =======================
 struct StockPrice {
     std::string symbol;
@@ -237,44 +203,6 @@ public:
     }
 };
 
-// ======================= EVENT SYSTEM EXAMPLE =======================
-class EventSystem {
-public:
-    enum class EventType {
-        USER_LOGIN,
-        USER_LOGOUT,
-        ORDER_PLACED,
-        PAYMENT_SUCCESS
-    };
-    
-private:
-    std::map<EventType, std::vector<std::function<void(const std::string&)>>> listeners;
-    
-public:
-    void addEventListener(EventType type, std::function<void(const std::string&)> listener) {
-        listeners[type].push_back(listener);
-    }
-    
-    void triggerEvent(EventType type, const std::string& data) {
-        std::string eventName;
-        switch(type) {
-            case EventType::USER_LOGIN: eventName = "USER_LOGIN"; break;
-            case EventType::USER_LOGOUT: eventName = "USER_LOGOUT"; break;
-            case EventType::ORDER_PLACED: eventName = "ORDER_PLACED"; break;
-            case EventType::PAYMENT_SUCCESS: eventName = "PAYMENT_SUCCESS"; break;
-        }
-        
-        std::cout << "🎯 Event triggered: " << eventName << " with data: " << data << std::endl;
-        
-        auto it = listeners.find(type);
-        if (it != listeners.end()) {
-            for (const auto& listener : it->second) {
-                listener(data);
-            }
-        }
-    }
-};
-
 // ======================= DEMONSTRATION FUNCTIONS =======================
 inline void demonstrateObserver() {
     std::cout << "\n===== OBSERVER PATTERN DEMO =====\n" << std::endl;
@@ -324,47 +252,6 @@ inline void demonstrateObserver() {
     market.updateStock("GOOGL", 2800.50);
     market.updateStock("AAPL", 152.30); // Price change
     market.displayAllStocks();
-    
-    // Modern C++ Observer with Lambda
-    std::cout << "\n4. Modern C++ Observer with Lambdas:" << std::endl;
-    ModernSubject<std::string> modernSubject;
-    
-    modernSubject.subscribe([](const std::string& data) {
-        std::cout << "Lambda Observer 1: Received " << data << std::endl;
-    });
-    
-    modernSubject.subscribe([](const std::string& data) {
-        std::cout << "Lambda Observer 2: Processing " << data << std::endl;
-    });
-    
-    modernSubject.setData("Hello World");
-    modernSubject.setData("Design Patterns");
-    
-    // Event System
-    std::cout << "\n5. Event System Example:" << std::endl;
-    EventSystem eventSystem;
-    
-    // Register event listeners
-    eventSystem.addEventListener(EventSystem::EventType::USER_LOGIN, [](const std::string& data) {
-        std::cout << "   Analytics: User logged in - " << data << std::endl;
-    });
-    
-    eventSystem.addEventListener(EventSystem::EventType::USER_LOGIN, [](const std::string& data) {
-        std::cout << "   Security: Login recorded for - " << data << std::endl;
-    });
-    
-    eventSystem.addEventListener(EventSystem::EventType::ORDER_PLACED, [](const std::string& data) {
-        std::cout << "   Email: Sending confirmation for order - " << data << std::endl;
-    });
-    
-    eventSystem.addEventListener(EventSystem::EventType::ORDER_PLACED, [](const std::string& data) {
-        std::cout << "   Inventory: Updating stock for order - " << data << std::endl;
-    });
-    
-    // Trigger events
-    eventSystem.triggerEvent(EventSystem::EventType::USER_LOGIN, "john.doe@email.com");
-    eventSystem.triggerEvent(EventSystem::EventType::ORDER_PLACED, "ORD-12345");
-    eventSystem.triggerEvent(EventSystem::EventType::PAYMENT_SUCCESS, "PAY-67890");
 }
 
 #endif // OBSERVER_HPP

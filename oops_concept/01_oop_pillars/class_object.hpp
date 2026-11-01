@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
+#include <stdexcept>
 
 /**
  * ===============================================
@@ -51,41 +53,15 @@ public:
         std::cout << "Copy constructor called for " << name << "\n";
     }
     
-    // Move Constructor (C++11)
-    // A move constructor is used to transfer ownership of resources from a temporary (rvalue) object to a new object.
-    // It avoids deep copying and is more efficient for objects managing dynamic memory or other resources.
-    // The `&&` indicates an rvalue reference, which binds to temporary objects.
-    Person(Person&& other) noexcept 
-        : name(std::move(other.name)), age(other.age), email(std::move(other.email)) {
-        std::cout << "Move constructor called\n";
-        other.age = 0; // Reset moved object to a valid state
-    }
-    
     // Copy Assignment Operator
     // This operator is used to copy the contents of one object to another existing object.
-    // The `&` indicates a reference to the current object, allowing us to modify it directly.
+    // It returns *this by reference so assignments can be chained (a = b = c).
     Person& operator=(const Person& other) {
         if (this != &other) { // Self-assignment check to avoid issues when assigning an object to itself
             name = other.name;
             age = other.age;
             email = other.email;
             std::cout << "Copy assignment called for " << name << "\n";
-        }
-        return *this;
-    }
-    
-    // Move Assignment Operator (C++11)
-    // This operator transfers ownership of resources from a temporary (rvalue) object to an existing object.
-    // It avoids deep copying and is more efficient for objects managing dynamic memory or other resources.
-    // The `&&` allows us to take ownership of resources from the temporary object.
-    // The `&` ensures we modify the current object directly.
-    Person& operator=(Person&& other) noexcept {
-        if (this != &other) { // Self-assignment check
-            name = std::move(other.name); // Transfer ownership of the name
-            age = other.age;              // Copy the age
-            email = std::move(other.email); // Transfer ownership of the email
-            other.age = 0; // Reset the moved-from object to a valid state
-            std::cout << "Move assignment called\n";
         }
         return *this;
     }
@@ -196,106 +172,6 @@ public:
 // Static member definition (required outside class)
 int Counter::totalObjects = 0;
 
-/**
- * Constructor Types Demonstration
- */
-class ConstructorDemo {
-private:
-    int* data;
-    size_t size;
-
-public:
-    // 1. Default Constructor
-    ConstructorDemo() : data(nullptr), size(0) {
-        std::cout << "Default constructor\n";
-    }
-    
-    // 2. Parameterized Constructor
-    ConstructorDemo(size_t s) : size(s) {
-        data = new int[size];
-        for (size_t i = 0; i < size; ++i) {
-            data[i] = static_cast<int>(i);
-        }
-        std::cout << "Parameterized constructor (size: " << size << ")\n";
-    }
-    
-    // 3. Copy Constructor (Deep Copy)
-    ConstructorDemo(const ConstructorDemo& other) : size(other.size) {
-        if (other.data) {
-            data = new int[size];
-            for (size_t i = 0; i < size; ++i) {
-                data[i] = other.data[i];
-            }
-        } else {
-            data = nullptr;
-        }
-        std::cout << "Copy constructor (deep copy)\n";
-    }
-    
-    // 4. Move Constructor
-    ConstructorDemo(ConstructorDemo&& other) noexcept 
-        : data(other.data), size(other.size) {
-        other.data = nullptr;
-        other.size = 0;
-        std::cout << "Move constructor\n";
-    }
-    
-    // 5. Conversion Constructor
-    ConstructorDemo(int value) : size(1) {
-        data = new int[1];
-        data[0] = value;
-        std::cout << "Conversion constructor (from int: " << value << ")\n";
-    }
-    
-    // Destructor
-    ~ConstructorDemo() {
-        delete[] data;
-        std::cout << "Destructor called\n";
-    }
-    
-    // Assignment operators
-    ConstructorDemo& operator=(const ConstructorDemo& other) {
-        if (this != &other) {
-            delete[] data;
-            size = other.size;
-            if (other.data) {
-                data = new int[size];
-                for (size_t i = 0; i < size; ++i) {
-                    data[i] = other.data[i];
-                }
-            } else {
-                data = nullptr;
-            }
-        }
-        std::cout << "Copy assignment\n";
-        return *this;
-    }
-    
-    ConstructorDemo& operator=(ConstructorDemo&& other) noexcept {
-        if (this != &other) {
-            delete[] data;
-            data = other.data;
-            size = other.size;
-            other.data = nullptr;
-            other.size = 0;
-        }
-        std::cout << "Move assignment\n";
-        return *this;
-    }
-    
-    void display() const {
-        std::cout << "Size: " << size << ", Data: ";
-        if (data) {
-            for (size_t i = 0; i < size; ++i) {
-                std::cout << data[i] << " ";
-            }
-        } else {
-            std::cout << "nullptr";
-        }
-        std::cout << "\n";
-    }
-};
-
 } // namespace BasicConcepts
 
 /**
@@ -313,13 +189,15 @@ public:
  *     3. Copy constructor
  *     4. Move constructor (C++11)
  *     5. Conversion constructor (single parameter)
- * 
+ *     Examples of 4 and 5: 04_advanced_cpp/rule_of_five.hpp
+ *
  * Q3: What is the Rule of Three/Five/Zero?
- * A3: Rule of Three: If you define destructor, copy constructor, or copy assignment, 
+ * A3: Rule of Three: If you define destructor, copy constructor, or copy assignment,
  *     define all three.
  *     Rule of Five: Add move constructor and move assignment (C++11)
  *     Rule of Zero: Use smart pointers and RAII to avoid manual resource management
- * 
+ *     Example: 04_advanced_cpp/rule_of_five.hpp
+ *
  * Q4: What is the 'this' pointer?
  * A4: 'this' is a pointer that points to the current object. Used to:
  *     - Resolve naming conflicts
@@ -364,12 +242,12 @@ inline void demonstrateClassObject() {
     
     // Constructor demonstration
     std::cout << "\n3. Constructor Types:" << std::endl;
-    BasicConcepts::ConstructorDemo demo1;                          // Default
-    BasicConcepts::ConstructorDemo demo2(5);                       // Parameterized
-    BasicConcepts::ConstructorDemo demo3(demo2);                   // Copy
-    BasicConcepts::ConstructorDemo demo4 = std::move(demo3);       // Move
-    BasicConcepts::ConstructorDemo demo5(42);                      // Conversion
-    
+    BasicConcepts::Person defaultPerson;                           // Default
+    BasicConcepts::Person bob("Bob", 40, "bob@email.com");         // Parameterized
+    BasicConcepts::Person bobCopy(bob);                            // Copy
+    BasicConcepts::Person assigned;
+    assigned = bob;                                                // Copy assignment
+
     // Method chaining with this pointer
     std::cout << "\n4. Method Chaining with 'this' pointer:" << std::endl;
     BasicConcepts::Person person3;

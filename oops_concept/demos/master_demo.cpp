@@ -18,8 +18,7 @@
  * ✅ Classes and Objects
  * ✅ Constructors and Destructors
  * ✅ Encapsulation (Data Hiding)
- * ✅ Inheritance (Single, Multiple, Virtual)
- * ✅ Access Control (Public, Private, Protected)
+ * ✅ Inheritance (Single, Multilevel) and Composition
  * ✅ Static Members and Methods
  * ✅ Exception Handling
  * ✅ RAII (Resource Acquisition Is Initialization)
@@ -29,7 +28,6 @@
 void demonstrateClassesAndObjects();
 void demonstrateEncapsulationConcept();
 void demonstrateInheritanceConcept();
-void demonstrateAccessControl();
 void demonstrateStaticMembers();
 void demonstrateExceptionHandling();
 
@@ -43,7 +41,6 @@ int main() {
         demonstrateClassesAndObjects();
         demonstrateEncapsulationConcept();
         demonstrateInheritanceConcept();
-        demonstrateAccessControl();
         demonstrateStaticMembers();
         demonstrateExceptionHandling();
         
@@ -54,8 +51,7 @@ int main() {
         std::cout << "📚 CONCEPTS DEMONSTRATED:" << std::endl;
         std::cout << "✅ Classes, Objects, Constructors, Destructors" << std::endl;
         std::cout << "✅ Encapsulation and Data Hiding" << std::endl;
-        std::cout << "✅ Single, Multiple, and Virtual Inheritance" << std::endl;
-        std::cout << "✅ Access Control (Public, Private, Protected)" << std::endl;
+        std::cout << "✅ Single and Multilevel Inheritance, Composition" << std::endl;
         std::cout << "✅ Static Members and Methods" << std::endl;
         std::cout << "✅ Exception Handling and Security" << std::endl;
         std::cout << "✅ RAII and Resource Management" << std::endl;
@@ -137,44 +133,24 @@ void demonstrateInheritanceConcept() {
               << ", Fuel: " << car.getFuelType() << std::endl;
     
     std::cout << "" << std::endl;
-    std::cout << "Multiple Inheritance (Car + Performance):" << std::endl;
+    std::cout << "Multilevel Inheritance (Vehicle -> Car -> SportsCar):" << std::endl;
     BasicConcepts::SportsCar sports("Ferrari", "F8", 2023, 250000.0, 2, "Gasoline", 3.9, 340, 3.0, true);
     std::cout << "Sports car: " << sports.getBrand() << " " << sports.getModel()
-              << ", Max speed: " << sports.getMaxSpeed() << " mph" 
+              << ", Max speed: " << sports.getMaxSpeed() << " mph"
               << ", Acceleration: " << sports.getAcceleration() << "s (0-60)" << std::endl;
-    
-    std::cout << "" << std::endl;
-    std::cout << "Virtual Inheritance (Diamond Problem Solution):" << std::endl;
-    BasicConcepts::CarEntertainmentSystem entertainment;
-    std::cout << "Entertainment system demonstrates virtual inheritance" << std::endl;
-    std::cout << "Prevents diamond problem in multiple inheritance" << std::endl;
-    
-    std::cout << "" << std::endl;
-}
 
-void demonstrateAccessControl() {
-    std::cout << "🔐 4. ACCESS CONTROL IN INHERITANCE" << std::endl;
-    std::cout << "-----------------------------------" << std::endl;
-    
-    std::cout << "Public Inheritance:" << std::endl;
-    BasicConcepts::PublicDerived pubDerived;
-    pubDerived.testAccess();
-    
     std::cout << "" << std::endl;
-    std::cout << "Private Inheritance:" << std::endl;
-    BasicConcepts::PrivateDerived privDerived;
-    privDerived.testAccess();
-    
-    std::cout << "" << std::endl;
-    std::cout << "Protected Inheritance:" << std::endl;
-    BasicConcepts::ProtectedDerived protDerived;
-    protDerived.testAccess();
-    
+    std::cout << "Composition (SmartCar HAS-A Engine and GPS):" << std::endl;
+    BasicConcepts::SmartCar smartCar("Tesla", "Model S", 2023, 95000.0, 4, "Electric", 0.0, 670, "Electric", "Autopilot");
+    smartCar.startEngine();
+    smartCar.enableAutonomous();
+    smartCar.navigate("Airport");
+
     std::cout << "" << std::endl;
 }
 
 void demonstrateStaticMembers() {
-    std::cout << "📊 5. STATIC MEMBERS AND METHODS" << std::endl;
+    std::cout << "📊 4. STATIC MEMBERS AND METHODS" << std::endl;
     std::cout << "--------------------------------" << std::endl;
     
     std::cout << "Creating Counter objects (static member tracking):" << std::endl;
@@ -199,7 +175,7 @@ void demonstrateStaticMembers() {
 }
 
 void demonstrateExceptionHandling() {
-    std::cout << "⚠️ 6. EXCEPTION HANDLING AND RAII" << std::endl;
+    std::cout << "⚠️ 5. EXCEPTION HANDLING AND RAII" << std::endl;
     std::cout << "---------------------------------" << std::endl;
     
     // Demonstrate exception safety in bank operations

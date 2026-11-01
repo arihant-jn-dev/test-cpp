@@ -38,44 +38,24 @@ int main() {
         sportsCar.activateSportMode();
         sportsCar.stopEngine();
         
-        std::cout << "\n4. Multiple Inheritance - SmartCar:" << std::endl;
-        
+        std::cout << "\n4. Composition - SmartCar HAS-A Engine and GPS:" << std::endl;
+
         // Test SmartCar (need exactly 10 parameters)
-        BasicConcepts::SmartCar smartCar("Tesla", "Model S", 2023, 95000.0, 4, "Electric", 0.0, 500, "V8", "Autopilot");
+        BasicConcepts::SmartCar smartCar("Tesla", "Model S", 2023, 95000.0, 4, "Electric", 0.0, 670, "Electric", "Autopilot");
         smartCar.displayBasicInfo();
         smartCar.displaySpecifications();
         smartCar.startEngine();
+        smartCar.enableAutonomous();
         smartCar.navigate("123 Main St");
         smartCar.stopEngine();
-        
-        std::cout << "\n5. Virtual Inheritance - Diamond Problem Solution:" << std::endl;
-        
-        // Test CarEntertainmentSystem (no-parameter constructor)
-        BasicConcepts::CarEntertainmentSystem entertainment;
-        entertainment.powerOn();
-        entertainment.setTemperature(22);
-        entertainment.powerOff();
-        
-        std::cout << "\n6. Access Control in Inheritance:" << std::endl;
-        
-        // Test different inheritance access levels
-        std::cout << "--- Public Inheritance ---" << std::endl;
-        BasicConcepts::PublicDerived pubDerived;
-        pubDerived.publicMethod();
-        
-        std::cout << "\n--- Protected Inheritance ---" << std::endl;
-        BasicConcepts::ProtectedDerived protDerived;
-        
-        std::cout << "\n--- Private Inheritance ---" << std::endl;
-        BasicConcepts::PrivateDerived privDerived;
-        
-        std::cout << "\n7. Polymorphism with Inheritance:" << std::endl;
-        
+
+        std::cout << "\n5. Polymorphism with Inheritance:" << std::endl;
+
         // Test polymorphism using base class pointers
-        std::vector<std::unique_ptr<BasicConcepts::Vehicle>> vehicles;
-        vehicles.push_back(std::make_unique<BasicConcepts::Car>("BMW", "X5", 2023, 65000.0, 4, "Gasoline", 3.0));
-        vehicles.push_back(std::make_unique<BasicConcepts::Motorcycle>("Yamaha", "YZF-R1", 2023, 17000.0, false, "Sport"));
-        vehicles.push_back(std::make_unique<BasicConcepts::SportsCar>("Porsche", "911", 2023, 120000.0, 2, "Premium", 3.0, 320, 3.4, true));
+        std::vector<std::shared_ptr<BasicConcepts::Vehicle>> vehicles;
+        vehicles.push_back(std::make_shared<BasicConcepts::Car>("BMW", "X5", 2023, 65000.0, 4, "Gasoline", 3.0));
+        vehicles.push_back(std::make_shared<BasicConcepts::Motorcycle>("Yamaha", "YZF-R1", 2023, 17000.0, false, "Sport"));
+        vehicles.push_back(std::make_shared<BasicConcepts::SportsCar>("Porsche", "911", 2023, 120000.0, 2, "Premium", 3.0, 320, 3.4, true));
         
         for (size_t i = 0; i < vehicles.size(); ++i) {
             std::cout << "\n--- Vehicle " << (i+1) << " polymorphism test ---" << std::endl;
@@ -85,12 +65,12 @@ int main() {
             vehicles[i]->stopEngine();
         }
         
-        std::cout << "\n8. Static Member Test:" << std::endl;
+        std::cout << "\n6. Static Member Test:" << std::endl;
         
         // Test static member
         std::cout << "Total vehicles created: " << BasicConcepts::Vehicle::getTotalVehicles() << std::endl;
         
-        std::cout << "\n9. Constructor/Destructor Chain Test:" << std::endl;
+        std::cout << "\n7. Constructor/Destructor Chain Test:" << std::endl;
         
         // Test constructor/destructor order
         std::cout << "Creating SportsCar to show constructor chain..." << std::endl;
@@ -100,7 +80,7 @@ int main() {
         } // Destructor called here
         std::cout << "SportsCar destroyed (check destructor order)" << std::endl;
         
-        std::cout << "\n10. Method Overriding Test:" << std::endl;
+        std::cout << "\n8. Method Overriding Test:" << std::endl;
         
         // Test method overriding
         BasicConcepts::Car baseCar("Honda", "Civic", 2023, 25000.0, 4, "Gasoline", 2.0);

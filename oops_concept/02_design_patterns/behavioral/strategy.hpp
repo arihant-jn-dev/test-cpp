@@ -110,7 +110,7 @@ public:
 class ShoppingCart {
 private:
     std::vector<std::pair<std::string, double>> items;
-    std::unique_ptr<PaymentStrategy> paymentStrategy;
+    std::shared_ptr<PaymentStrategy> paymentStrategy;
     
 public:
     void addItem(const std::string& item, double price) {
@@ -118,8 +118,8 @@ public:
         std::cout << "Added " << item << " ($" << price << ") to cart" << std::endl;
     }
     
-    void setPaymentStrategy(std::unique_ptr<PaymentStrategy> strategy) {
-        paymentStrategy = std::move(strategy);
+    void setPaymentStrategy(std::shared_ptr<PaymentStrategy> strategy) {
+        paymentStrategy = strategy;
         std::cout << "Payment method set to: " << paymentStrategy->getPaymentMethod() << std::endl;
     }
     
@@ -155,49 +155,46 @@ public:
 };
 
 // ======================= SORTING STRATEGY EXAMPLE =======================
-template<typename T>
 class SortStrategy {
 public:
     virtual ~SortStrategy() = default;
-    virtual void sort(std::vector<T>& data) = 0;
+    virtual void sort(std::vector<int>& data) = 0;
     virtual std::string getAlgorithmName() const = 0;
 };
 
-template<typename T>
-class BubbleSort : public SortStrategy<T> {
+class BubbleSort : public SortStrategy {
 public:
-    void sort(std::vector<T>& data) override {
+    void sort(std::vector<int>& data) override {
         std::cout << "Performing Bubble Sort..." << std::endl;
-        size_t n = data.size();
-        for (size_t i = 0; i < n - 1; i++) {
-            for (size_t j = 0; j < n - i - 1; j++) {
+        int n = data.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
                 if (data[j] > data[j + 1]) {
                     std::swap(data[j], data[j + 1]);
                 }
             }
         }
     }
-    
+
     std::string getAlgorithmName() const override {
         return "Bubble Sort";
     }
 };
 
-template<typename T>
-class QuickSort : public SortStrategy<T> {
+class QuickSort : public SortStrategy {
 private:
-    void quickSortHelper(std::vector<T>& data, int low, int high) {
+    void quickSortHelper(std::vector<int>& data, int low, int high) {
         if (low < high) {
             int pi = partition(data, low, high);
             quickSortHelper(data, low, pi - 1);
             quickSortHelper(data, pi + 1, high);
         }
     }
-    
-    int partition(std::vector<T>& data, int low, int high) {
-        T pivot = data[high];
+
+    int partition(std::vector<int>& data, int low, int high) {
+        int pivot = data[high];
         int i = (low - 1);
-        
+
         for (int j = low; j <= high - 1; j++) {
             if (data[j] < pivot) {
                 i++;
@@ -207,54 +204,48 @@ private:
         std::swap(data[i + 1], data[high]);
         return (i + 1);
     }
-    
+
 public:
-    void sort(std::vector<T>& data) override {
+    void sort(std::vector<int>& data) override {
         std::cout << "Performing Quick Sort..." << std::endl;
-        quickSortHelper(data, 0, static_cast<int>(data.size()) - 1);
+        int n = data.size();
+        quickSortHelper(data, 0, n - 1);
     }
-    
+
     std::string getAlgorithmName() const override {
         return "Quick Sort";
     }
 };
 
-template<typename T>
-class STLSort : public SortStrategy<T> {
+class STLSort : public SortStrategy {
 public:
-    void sort(std::vector<T>& data) override {
+    void sort(std::vector<int>& data) override {
         std::cout << "Performing STL Sort (typically IntroSort)..." << std::endl;
         std::sort(data.begin(), data.end());
     }
-    
+
     std::string getAlgorithmName() const override {
         return "STL Sort";
     }
 };
 
-template<typename T>
 class SortContext {
 private:
-    std::unique_ptr<SortStrategy<T>> strategy;
-    
+    std::shared_ptr<SortStrategy> strategy;
+
 public:
-    void setStrategy(std::unique_ptr<SortStrategy<T>> newStrategy) {
-        strategy = std::move(newStrategy);
+    void setStrategy(std::shared_ptr<SortStrategy> newStrategy) {
+        strategy = newStrategy;
     }
-    
-    void performSort(std::vector<T>& data) {
+
+    void performSort(std::vector<int>& data) {
         if (!strategy) {
             std::cout << "No sorting strategy set!" << std::endl;
             return;
         }
-        
+
         std::cout << "Using " << strategy->getAlgorithmName() << std::endl;
-        auto start = std::chrono::high_resolution_clock::now();
         strategy->sort(data);
-        auto end = std::chrono::high_resolution_clock::now();
-        
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << "Sort completed in " << duration.count() << " microseconds" << std::endl;
     }
 };
 
@@ -319,11 +310,11 @@ public:
 
 class CompressionContext {
 private:
-    std::unique_ptr<CompressionStrategy> strategy;
+    std::shared_ptr<CompressionStrategy> strategy;
     
 public:
-    void setCompressionStrategy(std::unique_ptr<CompressionStrategy> newStrategy) {
-        strategy = std::move(newStrategy);
+    void setCompressionStrategy(std::shared_ptr<CompressionStrategy> newStrategy) {
+        strategy = newStrategy;
         std::cout << "Compression method set to: " << strategy->getCompressionType() << std::endl;
     }
     
@@ -358,11 +349,11 @@ inline void demonstrateStrategy() {
     
     // Try different payment methods
     std::cout << "\n--- Paying with Credit Card ---" << std::endl;
-    cart.setPaymentStrategy(std::make_unique<CreditCardPayment>("1234567890123456", "John Doe", "12/25"));
+    cart.setPaymentStrategy(std::make_shared<CreditCardPayment>("1234567890123456", "John Doe", "12/25"));
     cart.checkout();
     
     std::cout << "\n--- Changing to PayPal ---" << std::endl;
-    cart.setPaymentStrategy(std::make_unique<PayPalPayment>("john.doe@email.com", "password123"));
+    cart.setPaymentStrategy(std::make_shared<PayPalPayment>("john.doe@email.com", "password123"));
     cart.checkout();
     
     // Sorting Strategy Example
@@ -371,7 +362,7 @@ inline void demonstrateStrategy() {
     std::vector<int> data2 = data1;
     std::vector<int> data3 = data1;
     
-    SortContext<int> sortContext;
+    SortContext sortContext;
     
     std::cout << "Original data: ";
     for (int num : data1) std::cout << num << " ";
@@ -379,7 +370,7 @@ inline void demonstrateStrategy() {
     
     // Bubble Sort
     std::cout << "\n--- Using Bubble Sort ---" << std::endl;
-    sortContext.setStrategy(std::make_unique<BubbleSort<int>>());
+    sortContext.setStrategy(std::make_shared<BubbleSort>());
     sortContext.performSort(data1);
     std::cout << "Sorted: ";
     for (int num : data1) std::cout << num << " ";
@@ -387,7 +378,7 @@ inline void demonstrateStrategy() {
     
     // Quick Sort
     std::cout << "\n--- Using Quick Sort ---" << std::endl;
-    sortContext.setStrategy(std::make_unique<QuickSort<int>>());
+    sortContext.setStrategy(std::make_shared<QuickSort>());
     sortContext.performSort(data2);
     std::cout << "Sorted: ";
     for (int num : data2) std::cout << num << " ";
@@ -395,7 +386,7 @@ inline void demonstrateStrategy() {
     
     // STL Sort
     std::cout << "\n--- Using STL Sort ---" << std::endl;
-    sortContext.setStrategy(std::make_unique<STLSort<int>>());
+    sortContext.setStrategy(std::make_shared<STLSort>());
     sortContext.performSort(data3);
     std::cout << "Sorted: ";
     for (int num : data3) std::cout << num << " ";
@@ -410,7 +401,7 @@ inline void demonstrateStrategy() {
     
     // ZIP Compression
     std::cout << "\n--- Using ZIP Compression ---" << std::endl;
-    compressor.setCompressionStrategy(std::make_unique<ZipCompression>());
+    compressor.setCompressionStrategy(std::make_shared<ZipCompression>());
     std::string zipCompressed = compressor.compressFile(originalData);
     std::cout << "Compressed: " << zipCompressed << std::endl;
     std::string zipDecompressed = compressor.decompressFile(zipCompressed);
@@ -418,7 +409,7 @@ inline void demonstrateStrategy() {
     
     // RAR Compression
     std::cout << "\n--- Using RAR Compression ---" << std::endl;
-    compressor.setCompressionStrategy(std::make_unique<RARCompression>());
+    compressor.setCompressionStrategy(std::make_shared<RARCompression>());
     std::string rarCompressed = compressor.compressFile(originalData);
     std::cout << "Compressed: " << rarCompressed << std::endl;
     std::string rarDecompressed = compressor.decompressFile(rarCompressed);

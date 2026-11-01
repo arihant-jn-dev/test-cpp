@@ -12,6 +12,11 @@
  * - RAII (Resource Acquisition Is Initialization)
  * - Automatic memory cleanup
  * - Very common in interviews for modern C++ positions
+ *
+ * For LLD code: shared_ptr + make_shared is the simplest default. unique_ptr
+ * is shown here because interviewers ask about ownership; it needs std::move
+ * to hand the object to someone else.
+ * unique_ptr with arrays and custom deleters: 04_advanced_cpp/advanced_modern_cpp.hpp
  */
 
 // ======================= RESOURCE CLASS FOR DEMONSTRATION =======================
@@ -58,25 +63,6 @@ void demonstrateUniquePtr() {
         std::cout << "resource2 now owns the resource" << std::endl;
         resource2->use();
     }
-    
-    // Array version
-    std::cout << "\n3. unique_ptr with arrays:" << std::endl;
-    std::unique_ptr<int[]> numbers = std::make_unique<int[]>(5);
-    for (int i = 0; i < 5; i++) {
-        numbers[i] = i * 10;
-        std::cout << "numbers[" << i << "] = " << numbers[i] << std::endl;
-    }
-    
-    // Custom deleter
-    std::cout << "\n4. unique_ptr with custom deleter:" << std::endl;
-    auto customDeleter = [](Resource* r) {
-        std::cout << "🔥 Custom deleter called for: " << r->getName() << std::endl;
-        delete r;
-    };
-    
-    std::unique_ptr<Resource, decltype(customDeleter)> resource3(
-        new Resource("FileHandle", 3), customDeleter);
-    resource3->use();
 } // All resources automatically cleaned up here
 
 // ======================= SHARED_PTR EXAMPLES =======================
@@ -160,7 +146,8 @@ void demonstrateWeakPtr() {
     std::cout << "\n2. Using weak_ptr:" << std::endl;
     std::weak_ptr<Node> weak_node = node2;
     
-    if (auto locked_node = weak_node.lock()) {
+    std::shared_ptr<Node> locked_node = weak_node.lock(); // empty if node is gone
+    if (locked_node) {
         std::cout << "Accessed node through weak_ptr: " << locked_node->data << std::endl;
         std::cout << "Reference count during access: " << locked_node.use_count() << std::endl;
     }

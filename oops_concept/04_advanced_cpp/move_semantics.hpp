@@ -151,14 +151,6 @@ void demonstrateRvalueReferences() {
 }
 
 // ======================= PERFECT FORWARDING =======================
-template<typename T>
-void processValue(T&& value) {
-    std::cout << "Processing value: " << value << std::endl;
-    
-    // Perfect forwarding to another function
-    processValueHelper(std::forward<T>(value));
-}
-
 void processValueHelper(int& value) {
     std::cout << "  -> Processing lvalue reference: " << value << std::endl;
     value += 10; // Can modify lvalue
@@ -171,6 +163,14 @@ void processValueHelper(const int& value) {
 void processValueHelper(int&& value) {
     std::cout << "  -> Processing rvalue reference: " << value << std::endl;
     value += 20; // Can modify rvalue
+}
+
+template<typename T>
+void processValue(T&& value) {
+    std::cout << "Processing value: " << value << std::endl;
+    
+    // Perfect forwarding to another function
+    processValueHelper(std::forward<T>(value));
 }
 
 void demonstratePerfectForwarding() {

@@ -4,8 +4,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <map>
-#include <functional>
 
 /**
  * FACTORY DESIGN PATTERNS
@@ -13,6 +11,9 @@
  * - Factory Method: Virtual method in base class
  * - Abstract Factory: Family of related objects
  * - Very common in interviews for object creation scenarios
+ *
+ * A registration-based factory (std::function + templates) is in
+ * 04_advanced_cpp/advanced_patterns.hpp.
  */
 
 // ======================= SIMPLE FACTORY PATTERN =======================
@@ -93,27 +94,27 @@ public:
         TRIANGLE
     };
     
-    static std::unique_ptr<Shape> createShape(ShapeType type, double param1, double param2 = 0) {
+    static std::shared_ptr<Shape> createShape(ShapeType type, double param1, double param2 = 0) {
         switch(type) {
             case ShapeType::CIRCLE:
-                return std::make_unique<Circle>(param1);
+                return std::make_shared<Circle>(param1);
             case ShapeType::RECTANGLE:
-                return std::make_unique<Rectangle>(param1, param2);
+                return std::make_shared<Rectangle>(param1, param2);
             case ShapeType::TRIANGLE:
-                return std::make_unique<Triangle>(param1, param2);
+                return std::make_shared<Triangle>(param1, param2);
             default:
                 return nullptr;
         }
     }
     
     // String-based factory (more flexible)
-    static std::unique_ptr<Shape> createShape(const std::string& type, double param1, double param2 = 0) {
+    static std::shared_ptr<Shape> createShape(const std::string& type, double param1, double param2 = 0) {
         if (type == "circle") {
-            return std::make_unique<Circle>(param1);
+            return std::make_shared<Circle>(param1);
         } else if (type == "rectangle") {
-            return std::make_unique<Rectangle>(param1, param2);
+            return std::make_shared<Rectangle>(param1, param2);
         } else if (type == "triangle") {
-            return std::make_unique<Triangle>(param1, param2);
+            return std::make_shared<Triangle>(param1, param2);
         }
         return nullptr;
     }
@@ -177,11 +178,11 @@ public:
 class DocumentFactory {
 public:
     virtual ~DocumentFactory() = default;
-    virtual std::unique_ptr<Document> createDocument() = 0;
+    virtual std::shared_ptr<Document> createDocument() = 0;
     
     // Template method using factory method
     void processDocument() {
-        auto doc = createDocument();
+        std::shared_ptr<Document> doc = createDocument();
         doc->open();
         std::cout << "Processing " << doc->getType() << "..." << std::endl;
         doc->save();
@@ -191,22 +192,22 @@ public:
 // Concrete Creators
 class WordDocumentFactory : public DocumentFactory {
 public:
-    std::unique_ptr<Document> createDocument() override {
-        return std::make_unique<WordDocument>();
+    std::shared_ptr<Document> createDocument() override {
+        return std::make_shared<WordDocument>();
     }
 };
 
 class PDFDocumentFactory : public DocumentFactory {
 public:
-    std::unique_ptr<Document> createDocument() override {
-        return std::make_unique<PDFDocument>();
+    std::shared_ptr<Document> createDocument() override {
+        return std::make_shared<PDFDocument>();
     }
 };
 
 class TextDocumentFactory : public DocumentFactory {
 public:
-    std::unique_ptr<Document> createDocument() override {
-        return std::make_unique<TextDocument>();
+    std::shared_ptr<Document> createDocument() override {
+        return std::make_shared<TextDocument>();
     }
 };
 
@@ -276,70 +277,32 @@ public:
 class GUIFactory {
 public:
     virtual ~GUIFactory() = default;
-    virtual std::unique_ptr<Button> createButton() = 0;
-    virtual std::unique_ptr<Checkbox> createCheckbox() = 0;
+    virtual std::shared_ptr<Button> createButton() = 0;
+    virtual std::shared_ptr<Checkbox> createCheckbox() = 0;
 };
 
 // Concrete Factories
 class WindowsFactory : public GUIFactory {
 public:
-    std::unique_ptr<Button> createButton() override {
-        return std::make_unique<WindowsButton>();
+    std::shared_ptr<Button> createButton() override {
+        return std::make_shared<WindowsButton>();
     }
     
-    std::unique_ptr<Checkbox> createCheckbox() override {
-        return std::make_unique<WindowsCheckbox>();
+    std::shared_ptr<Checkbox> createCheckbox() override {
+        return std::make_shared<WindowsCheckbox>();
     }
 };
 
 class MacFactory : public GUIFactory {
 public:
-    std::unique_ptr<Button> createButton() override {
-        return std::make_unique<MacButton>();
+    std::shared_ptr<Button> createButton() override {
+        return std::make_shared<MacButton>();
     }
     
-    std::unique_ptr<Checkbox> createCheckbox() override {
-        return std::make_unique<MacCheckbox>();
+    std::shared_ptr<Checkbox> createCheckbox() override {
+        return std::make_shared<MacCheckbox>();
     }
 };
-
-// ======================= REGISTRATION-BASED FACTORY (ADVANCED) =======================
-class AdvancedShapeFactory {
-private:
-    using Creator = std::function<std::unique_ptr<Shape>(double, double)>;
-    static std::map<std::string, Creator> creators;
-    
-public:
-    template<typename T>
-    static void registerShape(const std::string& name) {
-        creators[name] = [](double p1, double p2) -> std::unique_ptr<Shape> {
-            if constexpr (std::is_same_v<T, Circle>) {
-                return std::make_unique<T>(p1);
-            } else {
-                return std::make_unique<T>(p1, p2);
-            }
-        };
-    }
-    
-    static std::unique_ptr<Shape> create(const std::string& type, double param1, double param2 = 0) {
-        auto it = creators.find(type);
-        if (it != creators.end()) {
-            return it->second(param1, param2);
-        }
-        return nullptr;
-    }
-    
-    static void listAvailableShapes() {
-        std::cout << "Available shapes: ";
-        for (const auto& pair : creators) {
-            std::cout << pair.first << " ";
-        }
-        std::cout << std::endl;
-    }
-};
-
-// Static member definition
-std::map<std::string, AdvancedShapeFactory::Creator> AdvancedShapeFactory::creators;
 
 // ======================= DEMONSTRATION FUNCTIONS =======================
 inline void demonstrateFactory() {
@@ -347,8 +310,8 @@ inline void demonstrateFactory() {
     
     // Simple Factory
     std::cout << "1. Simple Factory Pattern:" << std::endl;
-    auto circle = ShapeFactory::createShape(ShapeFactory::ShapeType::CIRCLE, 5.0);
-    auto rect = ShapeFactory::createShape("rectangle", 4.0, 6.0);
+    std::shared_ptr<Shape> circle = ShapeFactory::createShape(ShapeFactory::ShapeType::CIRCLE, 5.0);
+    std::shared_ptr<Shape> rect = ShapeFactory::createShape("rectangle", 4.0, 6.0);
     
     if (circle) {
         circle->draw();
@@ -361,44 +324,30 @@ inline void demonstrateFactory() {
     
     // Factory Method
     std::cout << "\n2. Factory Method Pattern:" << std::endl;
-    auto wordFactory = std::make_unique<WordDocumentFactory>();
-    auto pdfFactory = std::make_unique<PDFDocumentFactory>();
-    
+    std::shared_ptr<DocumentFactory> wordFactory = std::make_shared<WordDocumentFactory>();
+    std::shared_ptr<DocumentFactory> pdfFactory = std::make_shared<PDFDocumentFactory>();
+
     wordFactory->processDocument();
     std::cout << std::endl;
     pdfFactory->processDocument();
-    
+
     // Abstract Factory
     std::cout << "\n3. Abstract Factory Pattern:" << std::endl;
-    auto windowsFactory = std::make_unique<WindowsFactory>();
-    auto macFactory = std::make_unique<MacFactory>();
-    
+    std::shared_ptr<GUIFactory> windowsFactory = std::make_shared<WindowsFactory>();
+    std::shared_ptr<GUIFactory> macFactory = std::make_shared<MacFactory>();
+
     // Create Windows UI
     std::cout << "Creating Windows UI:" << std::endl;
-    auto winButton = windowsFactory->createButton();
-    auto winCheckbox = windowsFactory->createCheckbox();
+    std::shared_ptr<Button> winButton = windowsFactory->createButton();
+    std::shared_ptr<Checkbox> winCheckbox = windowsFactory->createCheckbox();
     winButton->render();
     winCheckbox->render();
-    
+
     std::cout << "\nCreating Mac UI:" << std::endl;
-    auto macButton = macFactory->createButton();
-    auto macCheckbox = macFactory->createCheckbox();
+    std::shared_ptr<Button> macButton = macFactory->createButton();
+    std::shared_ptr<Checkbox> macCheckbox = macFactory->createCheckbox();
     macButton->render();
     macCheckbox->render();
-    
-    // Registration-based Factory
-    std::cout << "\n4. Registration-based Factory:" << std::endl;
-    AdvancedShapeFactory::registerShape<Circle>("circle");
-    AdvancedShapeFactory::registerShape<Rectangle>("rectangle");
-    AdvancedShapeFactory::registerShape<Triangle>("triangle");
-    
-    AdvancedShapeFactory::listAvailableShapes();
-    
-    auto advCircle = AdvancedShapeFactory::create("circle", 3.0);
-    if (advCircle) {
-        advCircle->draw();
-        std::cout << "Area: " << advCircle->getArea() << std::endl;
-    }
 }
 
 #endif // FACTORY_HPP

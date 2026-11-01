@@ -16,11 +16,9 @@
  * 
  * INTERVIEW QUESTIONS COVERED:
  * 1. What is inheritance and its types?
- * 2. What is the difference between public, private, and protected inheritance?
- * 3. What is multiple inheritance and diamond problem?
- * 4. What is virtual inheritance?
- * 5. What is method overriding vs overloading?
- * 6. What is the order of constructor/destructor calls?
+ * 2. What is method overriding vs overloading?
+ * 3. What is the order of constructor/destructor calls?
+ * 4. What is the difference between IS-A (inheritance) and HAS-A (composition)?
  */
 
 namespace BasicConcepts {
@@ -231,38 +229,40 @@ public:
 };
 
 /**
- * Multiple Inheritance Demonstration
- * Shows how a class can inherit from multiple base classes
+ * Composition (HAS-A) - combine classes without inheriting from them
+ * A SmartCar IS-A Car (inheritance) and HAS-A Engine and GPS (composition).
+ * Inheriting from Engine would wrongly say "a SmartCar IS-A Engine".
+ * Rule of thumb for LLD: use inheritance for IS-A, composition for HAS-A.
  */
 
-// First base class
+// A part that SmartCar owns (not a base class)
 class Engine {
-protected:
+private:
     double horsepower;
     std::string engineType;
 
 public:
-    Engine(double hp, const std::string& type) 
+    Engine(double hp, const std::string& type)
         : horsepower(hp), engineType(type) {
         std::cout << "Engine constructor called" << std::endl;
     }
-    
-    virtual ~Engine() {
+
+    ~Engine() {
         std::cout << "Engine destructor called" << std::endl;
     }
-    
+
     double getHorsepower() const { return horsepower; }
     const std::string& getEngineType() const { return engineType; }
-    
-    virtual void start() {
-        std::cout << "Starting " << engineType << " engine (" 
+
+    void start() const {
+        std::cout << "Starting " << engineType << " engine ("
                   << horsepower << " HP)" << std::endl;
     }
 };
 
-// Second base class
+// Another part that SmartCar owns
 class GPS {
-protected:
+private:
     std::string currentLocation;
     bool isActive;
 
@@ -270,8 +270,8 @@ public:
     GPS() : currentLocation("Unknown"), isActive(false) {
         std::cout << "GPS constructor called" << std::endl;
     }
-    
-    virtual ~GPS() {
+
+    ~GPS() {
         std::cout << "GPS destructor called" << std::endl;
     }
     
@@ -289,7 +289,7 @@ public:
     const std::string& getLocation() const { return currentLocation; }
     bool getIsActive() const { return isActive; }
     
-    virtual void navigate(const std::string& destination) {
+    void navigate(const std::string& destination) const {
         if (isActive) {
             std::cout << "Navigating to " << destination << std::endl;
         } else {
@@ -298,9 +298,11 @@ public:
     }
 };
 
-// Multiple Inheritance - SmartCar inherits from both Car and GPS
-class SmartCar : public Car, public Engine, public GPS {
+// SmartCar IS-A Car (inherits) and HAS-A Engine and GPS (members)
+class SmartCar : public Car {
 private:
+    Engine engine;   // HAS-A
+    GPS gps;         // HAS-A
     bool autonomousMode;
     std::string aiAssistant;
 
@@ -309,229 +311,44 @@ public:
              int doors, const std::string& fuel, double engineCap,
              double hp, const std::string& engineType, const std::string& ai)
         : Car(b, m, y, p, doors, fuel, engineCap),
-          Engine(hp, engineType),
-          GPS(),
+          engine(hp, engineType),
           autonomousMode(false),
           aiAssistant(ai) {
         std::cout << "SmartCar constructor called" << std::endl;
     }
-    
+
     ~SmartCar() override {
         std::cout << "SmartCar destructor called" << std::endl;
     }
-    
-    // Resolve ambiguity - which start() method to use?
+
+    // SmartCar does the work by delegating to the parts it owns
     void startEngine() const override {
-        // Call specific base class method
         std::cout << "SmartCar starting: ";
-        // Engine::start(); // Remove const conflict
-        Car::startEngine();
+        engine.start();
     }
-    
+
+    void navigate(const std::string& destination) const {
+        gps.navigate(destination);
+    }
+
     void enableAutonomous() {
         autonomousMode = true;
-        activate(); // Activate GPS
+        gps.activate();
         std::cout << "Autonomous mode enabled with " << aiAssistant << std::endl;
     }
-    
+
     void disableAutonomous() {
         autonomousMode = false;
+        gps.deactivate();
         std::cout << "Autonomous mode disabled" << std::endl;
     }
-    
+
     void displaySpecifications() const override {
         Car::displaySpecifications();
-        std::cout << "Engine: " << getEngineType() << " (" << getHorsepower() << " HP)" << std::endl;
-        std::cout << "GPS: " << (getIsActive() ? "Active" : "Inactive") << std::endl;
+        std::cout << "Engine: " << engine.getEngineType() << " (" << engine.getHorsepower() << " HP)" << std::endl;
+        std::cout << "GPS: " << (gps.getIsActive() ? "Active" : "Inactive") << std::endl;
         std::cout << "AI Assistant: " << aiAssistant << std::endl;
         std::cout << "Autonomous: " << (autonomousMode ? "Enabled" : "Disabled") << std::endl;
-    }
-};
-
-/**
- * Diamond Problem and Virtual Inheritance
- * Demonstrates: The diamond problem and how virtual inheritance solves it
- */
-
-// Common base class
-class PoweredDevice {
-protected:
-    bool isPoweredOn;
-    double powerConsumption;
-
-public:
-    PoweredDevice(double power = 0.0) : isPoweredOn(false), powerConsumption(power) {
-        std::cout << "PoweredDevice constructor called" << std::endl;
-    }
-    
-    virtual ~PoweredDevice() {
-        std::cout << "PoweredDevice destructor called" << std::endl;
-    }
-    
-    virtual void powerOn() {
-        isPoweredOn = true;
-        std::cout << "Device powered on (consuming " << powerConsumption << "W)" << std::endl;
-    }
-    
-    virtual void powerOff() {
-        isPoweredOn = false;
-        std::cout << "Device powered off" << std::endl;
-    }
-    
-    bool getPowerStatus() const { return isPoweredOn; }
-    double getPowerConsumption() const { return powerConsumption; }
-};
-
-// Virtual inheritance to solve diamond problem
-class Radio : virtual public PoweredDevice {
-protected:
-    std::string currentStation;
-
-public:
-    Radio() : PoweredDevice(15.0), currentStation("FM 101.5") {
-        std::cout << "Radio constructor called" << std::endl;
-    }
-    
-    ~Radio() override {
-        std::cout << "Radio destructor called" << std::endl;
-    }
-    
-    void tuneToStation(const std::string& station) {
-        if (isPoweredOn) {
-            currentStation = station;
-            std::cout << "Tuned to " << station << std::endl;
-        }
-    }
-    
-    const std::string& getCurrentStation() const { return currentStation; }
-};
-
-class AirConditioner : virtual public PoweredDevice {
-protected:
-    int temperature;
-    std::string mode;
-
-public:
-    AirConditioner() : PoweredDevice(1500.0), temperature(72), mode("Cool") {
-        std::cout << "AirConditioner constructor called" << std::endl;
-    }
-    
-    ~AirConditioner() override {
-        std::cout << "AirConditioner destructor called" << std::endl;
-    }
-    
-    void setTemperature(int temp) {
-        if (isPoweredOn) {
-            temperature = temp;
-            std::cout << "Temperature set to " << temp << "°F" << std::endl;
-        }
-    }
-    
-    int getTemperature() const { return temperature; }
-    const std::string& getMode() const { return mode; }
-};
-
-// Multiple inheritance with virtual inheritance (solves diamond problem)
-class CarEntertainmentSystem : public Radio, public AirConditioner {
-private:
-    std::string displayMode;
-
-public:
-    CarEntertainmentSystem() : PoweredDevice(200.0), displayMode("Dashboard") {
-        std::cout << "CarEntertainmentSystem constructor called" << std::endl;
-    }
-    
-    ~CarEntertainmentSystem() override {
-        std::cout << "CarEntertainmentSystem destructor called" << std::endl;
-    }
-    
-    // Override powerOn to handle both radio and AC
-    void powerOn() override {
-        PoweredDevice::powerOn(); // Only one call due to virtual inheritance
-        std::cout << "Entertainment system fully activated" << std::endl;
-    }
-    
-    void switchToRadio() {
-        displayMode = "Radio";
-        std::cout << "Switched to radio mode: " << getCurrentStation() << std::endl;
-    }
-    
-    void switchToClimate() {
-        displayMode = "Climate";
-        std::cout << "Switched to climate mode: " << getTemperature() << "°F" << std::endl;
-    }
-    
-    const std::string& getDisplayMode() const { return displayMode; }
-};
-
-/**
- * Access Specifier Inheritance Demonstration
- * Shows how different inheritance access specifiers affect member access
- */
-class BaseClass {
-private:
-    int privateVar = 1;
-protected:
-    int protectedVar = 2;
-public:
-    int publicVar = 3;
-    
-    BaseClass() {
-        std::cout << "BaseClass constructor" << std::endl;
-    }
-    
-    void publicMethod() {
-        std::cout << "BaseClass public method" << std::endl;
-    }
-};
-
-// Public inheritance - most common
-class PublicDerived : public BaseClass {
-public:
-    PublicDerived() {
-        std::cout << "PublicDerived constructor" << std::endl;
-    }
-    
-    void testAccess() {
-        // privateVar;    // Error: cannot access private members
-        protectedVar = 20; // OK: protected members accessible
-        publicVar = 30;    // OK: public members accessible
-        publicMethod();    // OK: public methods accessible
-    }
-};
-
-// Protected inheritance
-class ProtectedDerived : protected BaseClass {
-public:
-    ProtectedDerived() {
-        std::cout << "ProtectedDerived constructor" << std::endl;
-    }
-    
-    void testAccess() {
-        // privateVar;    // Error: cannot access private members
-        protectedVar = 200; // OK: protected members accessible
-        publicVar = 300;    // OK: public members become protected
-        publicMethod();     // OK: public methods become protected
-    }
-};
-
-// Private inheritance
-class PrivateDerived : private BaseClass {
-public:
-    PrivateDerived() {
-        std::cout << "PrivateDerived constructor" << std::endl;
-    }
-    
-    void testAccess() {
-        // privateVar;    // Error: cannot access private members
-        protectedVar = 2000; // OK: protected members become private
-        publicVar = 3000;    // OK: public members become private
-        publicMethod();      // OK: public methods become private
-    }
-    
-    // Expose base class functionality if needed
-    void callBaseMethod() {
-        publicMethod(); // Can call within class
     }
 };
 
@@ -549,47 +366,31 @@ public:
  *     4. Hierarchical inheritance - one base, multiple derived
  *     5. Hybrid inheritance - combination of above types
  * 
- * Q2: What is the difference between public, protected, and private inheritance?
- * A2: - Public: IS-A relationship, base class interface preserved
- *     - Protected: Base public members become protected in derived
- *     - Private: IMPLEMENTED-IN-TERMS-OF, base members become private
- * 
- * Q3: What is the diamond problem?
- * A3: When a class inherits from two classes that share a common base class,
- *     it creates ambiguity and duplicate base class instances.
- *     Solved using virtual inheritance.
- * 
- * Q4: What is virtual inheritance?
- * A4: Virtual inheritance ensures only one instance of a base class exists
- *     in a multiple inheritance hierarchy, solving the diamond problem.
- * 
- * Q5: What is method overriding vs overloading?
- * A5: - Overriding: Redefining virtual function in derived class (runtime polymorphism)
+ * Q2: What is method overriding vs overloading?
+ * A2: - Overriding: Redefining virtual function in derived class (runtime polymorphism)
  *     - Overloading: Multiple functions with same name, different parameters (compile-time)
- * 
- * Q6: What is the order of constructor/destructor calls in inheritance?
- * A6: Constructors: Base class first, then derived class
+ *
+ * Q3: What is the order of constructor/destructor calls in inheritance?
+ * A3: Constructors: Base class first, then derived class
  *     Destructors: Derived class first, then base class (reverse order)
- * 
- * Q7: Why use virtual destructors?
- * A7: Virtual destructors ensure proper cleanup when deleting objects through
+ *
+ * Q4: Why use virtual destructors?
+ * A4: Virtual destructors ensure proper cleanup when deleting objects through
  *     base class pointers, preventing resource leaks.
- * 
- * Q8: What is the difference between IS-A and HAS-A relationships?
- * A8: - IS-A: Inheritance relationship (Car IS-A Vehicle)
- *     - HAS-A: Composition relationship (Car HAS-A Engine)
- * 
- * Q9: Can constructors be virtual?
- * A9: No, constructors cannot be virtual because:
+ *
+ * Q5: What is the difference between IS-A and HAS-A relationships?
+ * A5: - IS-A: Inheritance relationship (Car IS-A Vehicle)
+ *     - HAS-A: Composition relationship (SmartCar HAS-A Engine)
+ *     Prefer composition when the relationship is HAS-A (see SmartCar above).
+ *
+ * Q6: Can constructors be virtual?
+ * A6: No, constructors cannot be virtual because:
  *     - Virtual function calls require vtable
  *     - vtable is set up during object construction
  *     - Object doesn't exist during constructor call
- * 
- * Q10: What happens if we don't use virtual inheritance in diamond problem?
- * A10: - Derived class gets multiple copies of base class
- *      - Ambiguity in member access
- *      - Increased memory usage
- *      - Compilation errors for ambiguous calls
+ *
+ * Protected/private inheritance and the diamond problem are in
+ * 04_advanced_cpp/advanced_inheritance.hpp.
  */
 
 // ======================= DEMONSTRATION FUNCTION =======================
@@ -597,44 +398,30 @@ inline void demonstrateInheritance() {
     std::cout << "\n===== INHERITANCE DEMO =====\n" << std::endl;
     
     // Single Inheritance
-    std::cout << "1. Single Inheritance:" << std::endl;
-    // Creating different vehicles
+    std::cout << "1. Single Inheritance (Vehicle -> Car):" << std::endl;
     BasicConcepts::Car car("Toyota", "Camry", 2023, 30000.0, 4, "Gasoline", 2.5);
     std::cout << "Car brand: " << car.getBrand() << ", doors: " << car.getNumberOfDoors() << std::endl;
-    
-    // Multiple Inheritance
-    std::cout << "\n2. Multiple Inheritance:" << std::endl;
+
+    // Multilevel Inheritance
+    std::cout << "\n2. Multilevel Inheritance (Vehicle -> Car -> SportsCar):" << std::endl;
     BasicConcepts::SportsCar sports("Ferrari", "F8", 2023, 250000.0, 2, "Gasoline", 3.9, 340, 3.0, true);
     std::cout << "Sports car: " << sports.getBrand() << ", max speed: " << sports.getMaxSpeed() << " mph" << std::endl;
-    
-    // Multilevel Inheritance
-    std::cout << "\n3. Multilevel Inheritance:" << std::endl;
-    std::cout << "Demonstrating inheritance chain: Vehicle -> Car -> SportsCar" << std::endl;
-    
-    // Virtual Inheritance (Diamond Problem Solution)
-    std::cout << "\n4. Virtual Inheritance (Diamond Problem):" << std::endl;
-    BasicConcepts::CarEntertainmentSystem entertainment;
-    std::cout << "Entertainment system demonstrates virtual inheritance" << std::endl;
-    
+
+    // Composition
+    std::cout << "\n3. Composition (SmartCar HAS-A Engine and GPS):" << std::endl;
+    BasicConcepts::SmartCar smartCar("Tesla", "Model S", 2023, 95000.0, 4, "Electric", 0.0, 670, "Electric", "Autopilot");
+    smartCar.startEngine();
+    smartCar.enableAutonomous();
+    smartCar.navigate("123 Main St");
+
     // Constructor/Destructor Order
-    std::cout << "\n5. Constructor/Destructor Order:" << std::endl;
+    std::cout << "\n4. Constructor/Destructor Order:" << std::endl;
     {
         std::cout << "Creating SportsCar object:" << std::endl;
         BasicConcepts::SportsCar tempSports("Lamborghini", "Huracan", 2023, 300000.0, 2, "Gasoline", 5.2, 370, 2.9, true);
         std::cout << "SportsCar object created, now going out of scope..." << std::endl;
     }
     std::cout << "SportsCar object destroyed" << std::endl;
-    
-    // Access Control in Inheritance
-    std::cout << "\n6. Access Control in Inheritance:" << std::endl;
-    BasicConcepts::PublicDerived pubDerived;
-    pubDerived.testAccess();
-    
-    BasicConcepts::PrivateDerived privDerived;
-    privDerived.testAccess();
-    
-    BasicConcepts::ProtectedDerived protDerived;
-    protDerived.testAccess();
 }
 
 #endif // INHERITANCE_HPP
